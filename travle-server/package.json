@@ -1,0 +1,35 @@
+{
+  "name": "travle-server",
+  "version": "1.0.0",
+  "description": "智能景点介绍服务端基于node.js+express+LangChain",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "lint": "eslint src/ --fix",
+    "format": "prettier --write src/"
+  },
+  "dependencies": {
+    "@langchain/core": "^1.2.1",
+    "@langchain/openai": "^1.5.3",
+    "cors": "^2.8.6",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^8.5.2",
+    "nodemon": "^3.1.14"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.1.1",
+    "eslint": "^10.7.0",
+    "prettier": "^3.9.5",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- PWA：可添加到手机桌面 -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#1989fa" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>智能旅游助手</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <!-- PWA Service Worker 注册（生产环境启用离线缓存） -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {})
+        })
+      }
+    </script>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

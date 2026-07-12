@@ -1,0 +1,101 @@
+/* ============================================================
+   全局公共样式
+   作用：定义整个项目通用的布局、卡片、按钮样式
+   被 main.js 全局引入，所有页面都能使用这些类名
+   ============================================================ */
+
+/* ---- 页面容器 ---- */
+
+/* 所有页面的外层包装器，设置最小高度和统一背景色 */
+.page-container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding-bottom: 70px;   /* 底部留空，避开 tabbar（约50px） + 安全区 */
+}
+
+/* ---- 页面头部 ---- */
+
+/* 顶部导航栏：sticky 吸顶，z-index 保证不被内容遮挡 */
+.page-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: #fff;
+}
+
+/* ---- 页面内容区 ---- */
+
+/* 统一的内容区域内边距 */
+.page-content {
+  padding: 16px;
+}
+
+/* ---- 按钮 ---- */
+
+/* 通用按钮基础样式 */
+.common-button {
+  width: 100%;
+  height: 44px;
+  line-height: 44px;
+  font-size: 16px;
+  border-radius: 8px;
+}
+
+/* 主要按钮（品牌蓝色） */
+.primary-button {
+  background-color: #1989fa !important;
+  border: none !important;
+}
+
+/* 次要按钮（白底蓝字描边） */
+.secondary-button {
+  background-color: #fff !important;
+  color: #1989fa !important;
+  border: 1px solid #1989fa !important;
+}
+
+/* ---- 卡片 ---- */
+
+/* 通用卡片：白底、圆角、轻阴影，用于信息展示区块 */
+.card {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* 卡片内的小标题 */
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #323233;
+  margin-bottom: 12px;
+}
+
+/* ---- 动效 ---- */
+
+/**
+ * 闪烁光标动画：用于 AI 流式输出时尾部光标效果
+ * blink 动画分两阶段：完全显示 → 完全透明 → 完全显示，循环 1s
+ * 使用场景：Chat 页面 AI 回复末尾的光标
+ */
+.streaming-cursor {
+  display: inline-block;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ---- 加载容器 ---- */
+
+/* 居中的加载指示器容器 */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 0;
+}

@@ -1,0 +1,18 @@
+# ============= 通用忽略 =============
+node_modules/
+dist/
+build/
+.env
+.env.local
+.env.*.local
+.DS_Store
+Thumbs.db
+
+# ============= 前端忽略 =============
+agentTravel/node_modules/
+agentTravel/dist/
+agentTravel/.env
+
+# ============= 后端忽略 =============
+travle-server/node_modules/
+travle-server/.env

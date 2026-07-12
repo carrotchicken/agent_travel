@@ -1,0 +1,17 @@
+{
+  "name": "智能旅游助手",
+  "short_name": "旅游助手",
+  "description": "AI 驱动的智能旅游规划平台",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f5f5",
+  "theme_color": "#1989fa",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
