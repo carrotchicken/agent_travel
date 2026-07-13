@@ -1,0 +1,27 @@
+// ============================================================
+// Prisma Schema — 数据模型定义
+// 数据库：SQLite（文件数据库，零安装）
+// ============================================================
+
+generator client {
+  provider = "prisma-client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// 用户表
+// ============================================================
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique           // 用户名（登录用）
+  password  String                      // bcrypt 加密后的密码
+  avatar    String   @default("")       // 头像 URL
+  createdAt DateTime @default(now())   // 注册时间
+  updatedAt DateTime @updatedAt        // 最后更新时间
+
+  @@map("users")  // 表名映射
+}

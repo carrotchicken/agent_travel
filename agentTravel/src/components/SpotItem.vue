@@ -61,8 +61,8 @@
 defineProps({
   data: {
     type: Object,
-    // 默认空对象，避免父组件没传时报错
-    default: () => ({})
+    // 默认为 null：未传时显示空状态，传空对象 {} 时也视为无数据
+    default: null
   }
 })
 </script>

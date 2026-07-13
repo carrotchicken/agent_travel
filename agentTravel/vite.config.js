@@ -11,7 +11,6 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      // 所有 /api 开头的请求转发到后端 3300 端口，解决跨域
       '/api': {
         target: 'http://127.0.0.1:3300',
         changeOrigin: true

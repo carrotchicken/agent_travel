@@ -23,7 +23,14 @@ const request = axios.create({
 // ============================================================
 
 request.interceptors.request.use(
-  config => config,
+  config => {
+    // 自动从 localStorage 读取 token 并添加到请求头
+    const token = localStorage.getItem('auth_token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
   error => Promise.reject(error)
 )
 
@@ -32,9 +39,15 @@ request.interceptors.request.use(
 // ============================================================
 
 // 直接返回 response.data，调用方不用再取 .data
+// 注意：4xx/5xx 状态码也会进入这里，因为我们在 error 处理中也返回了数据
 request.interceptors.response.use(
   response => response.data,
-  error => Promise.reject(error)
+  error => {
+    if (error.response && error.response.data) {
+      return Promise.reject(error.response.data)
+    }
+    return Promise.reject(error)
+  }
 )
 
 // ============================================================
@@ -49,6 +62,55 @@ export function post(url: string, data?: unknown): Promise<any> {
 /** GET 请求 */
 export function get(url: string, params?: unknown): Promise<any> {
   return request.get(url, { params })
+}
+
+/** DELETE 请求 */
+export function del(url: string): Promise<any> {
+  return request.delete(url)
+}
+
+/** PATCH 请求 */
+export function patch(url: string, data?: unknown): Promise<any> {
+  return request.patch(url, data)
+}
+
+// ============================================================
+// Auth 专用请求实例（baseURL = /api/auth，带 Token 拦截器）
+// ============================================================
+
+const authRequest = axios.create({
+  baseURL: '/api/auth',
+  timeout: 10000,
+  headers: { 'Content-Type': 'application/json' }
+})
+
+authRequest.interceptors.request.use(
+  config => {
+    const token = localStorage.getItem('auth_token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  error => Promise.reject(error)
+)
+
+authRequest.interceptors.response.use(
+  response => response.data,
+  error => {
+    if (error.response && error.response.data) {
+      return Promise.reject(error.response.data)
+    }
+    return Promise.reject(error)
+  }
+)
+
+export function authPost(url: string, data?: unknown): Promise<any> {
+  return authRequest.post(url, data)
+}
+
+export function authGet(url: string, params?: unknown): Promise<any> {
+  return authRequest.get(url, { params })
 }
 
 // ============================================================
@@ -92,9 +154,16 @@ export async function fetchStream(
   const controller = new AbortController()
 
   try {
+    // 构建请求头：携带 JWT Token（与 Axios 拦截器保持一致）
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    const token = localStorage.getItem('auth_token')
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+
     const response = await fetch(`/api/travel/${url}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(data),
       signal: controller.signal
     })

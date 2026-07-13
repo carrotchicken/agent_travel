@@ -6,52 +6,72 @@ import Home from '@/views/Home/index.vue'
 import Chat from '@/views/Chat/index.vue'
 import Profile from '@/views/Profile/index.vue'
 import Detail from '@/views/Detail/index.vue'
+import Login from '@/views/Login/index.vue'
+import Register from '@/views/Register/index.vue'
 
 // ============================================================
 // 路由配置
 // ============================================================
-
-/**
- * 路由设计：
- * - /       首页：表单输入 + 热门城市
- * - /chat   聊天页：AI 对话
- * - /profile 我的：个人信息 + 功能菜单
- * - /detail 详情页：行程展示
- * 
- * 路由名称用于：
- * - App.vue 中控制 Tabbar 显示
- * - 编程式导航 router.push({ name: 'Home' })
- */
 const routes = [
-    {
-        path: '/',
-        name: 'Home',
-        component: Home
-    },
-    {
-        path: '/chat',
-        name: 'Chat',
-        component: Chat
-    },
-    {
-        path: '/profile',
-        name: 'Profile',
-        component: Profile
-    },
-    {
-        path: '/detail',
-        name: 'Detail',
-        component: Detail
-    }
+  {
+    path: '/',
+    name: 'Home',
+    component: Home
+  },
+  {
+    path: '/chat',
+    name: 'Chat',
+    component: Chat,
+    meta: { requiresAuth: true }   // 需要登录
+  },
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: Profile,
+    meta: { requiresAuth: true }   // 需要登录
+  },
+  {
+    path: '/detail',
+    name: 'Detail',
+    component: Detail
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: Login
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: Register
+  }
 ]
 
 // ============================================================
 // 创建路由实例
 // ============================================================
 const router = createRouter({
-    // 使用 HTML5 History 模式（URL 不带 #）
-    history: createWebHistory(import.meta.env.BASE_URL),
-    routes
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes
+})
+
+// ============================================================
+// 全局导航守卫：需要登录的页面 + 已登录跳转
+// ============================================================
+
+router.beforeEach((to) => {
+  // 从 localStorage 读取 token（不用 Pinia，因为守卫执行时 store 可能尚未初始化）
+  const token = localStorage.getItem('auth_token')
+
+  // 需要登录但没有 token → 跳转到登录页
+  if (to.meta.requiresAuth && !token) {
+    return { path: '/login', query: { redirect: to.fullPath } }
+  }
+
+  // 已登录时访问登录/注册页 → 跳回首页
+  if (token && (to.name === 'Login' || to.name === 'Register')) {
+    return { path: '/' }
+  }
 })
 
 export default router

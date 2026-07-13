@@ -1,0 +1,16 @@
+[
+  {
+    "fingerprint": "task",
+    "summary": "---",
+    "first_seen_iteration": 1,
+    "last_seen_iteration": 1,
+    "count": 1
+  },
+  {
+    "fingerprint": "task-4a87d89f",
+    "summary": "## 豆包审查 — 全部修复完成 ✅",
+    "first_seen_iteration": 2,
+    "last_seen_iteration": 2,
+    "count": 1
+  }
+]

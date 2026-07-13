@@ -13,6 +13,9 @@ RUN npm ci --production
 # 复制源码
 COPY src/ ./src/
 
+# 确保 data 目录存在（SQLite 数据库文件存放位置）
+RUN mkdir -p /app/data
+
 # 暴露端口
 EXPOSE 3300
 

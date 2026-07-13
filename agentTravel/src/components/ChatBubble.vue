@@ -83,10 +83,6 @@ const formatTime = computed(() => {
 </script>
 
 <style scoped>
-/* 
-  气泡整体布局：用 flex 纵向排列（气泡内容 + 时间）
-  max-width: 80% 防止长文本撑满屏幕
-*/
 .chat-bubble {
   display: flex;
   flex-direction: column;
@@ -110,28 +106,30 @@ const formatTime = computed(() => {
   padding: 12px 16px;
   border-radius: 16px;
   font-size: 15px;
-  line-height: 1.5;
-  word-break: break-word;   /* 长英文单词强制换行，避免溢出 */
+  line-height: 1.6;
+  word-break: break-word;
 }
 
-/* 用户气泡：蓝色背景 + 右下角直角（模仿微信风格） */
+/* 用户气泡：橙黄渐变 */
 .user-message .bubble-content {
-  background: #1989fa;
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
   color: #fff;
   border-bottom-right-radius: 4px;
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.2);
 }
 
-/* AI 气泡：灰色背景 + 左下角直角 */
+/* AI 气泡：白色卡片 */
 .ai-message .bubble-content {
-  background: #f5f5f5;
-  color: #323233;
+  background: #fff;
+  color: #333;
   border-bottom-left-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 /* 时间文字 */
 .message-time {
   font-size: 11px;
-  color: #999;
+  color: #bbb;
   margin-top: 4px;
   padding: 0 4px;
 }

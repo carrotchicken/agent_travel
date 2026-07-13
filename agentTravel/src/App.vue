@@ -2,8 +2,10 @@
 // ============================================================
 // 模块导入
 // ============================================================
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { useTravelStore } from '@/stores/travel'
 
 // ============================================================
 // 路由与状态
@@ -12,10 +14,28 @@ import { useRoute } from 'vue-router'
 // 获取当前路由对象，用于判断当前在哪个页面
 // route.name 返回路由配置中的 name 值：'Home' / 'Chat' / 'Profile' / 'Detail'
 const route = useRoute()
+const authStore = useAuthStore()
+const travelStore = useTravelStore()
 
 // Tabbar 当前激活项的索引（0=首页, 1=对话, 2=我的）
 // 注意：这里用 ref(0) 硬编码初始值，实际切换由 van-tabbar 的 route 属性自动管理
 const active = ref(0)
+
+// ============================================================
+// 应用启动时恢复登录状态
+// 调用后端 GET /api/auth/me 验证 token 并获取最新用户信息
+// ============================================================
+onMounted(async () => {
+  try {
+    await authStore.restoreSession()
+    // 登录成功后从后端同步行程数据
+    if (authStore.isLoggedIn) {
+      travelStore.syncFromServer()
+    }
+  } catch {
+    // token 验证失败，静默处理（store 内已清理）
+  }
+})
 </script>
 
 <template>
@@ -42,11 +62,11 @@ const active = ref(0)
           v-model="active"：双向绑定当前高亮项索引
           active-color：选中态图标颜色
         -->
-        <van-tabbar 
-            v-if="['Home', 'Chat', 'Profile'].includes(route.name)" 
+        <van-tabbar
+            class="app-tabbar"
+            v-if="['Home', 'Chat', 'Profile'].includes(route.name)"
             route
             v-model="active"
-            active-color="#84E7FF"
         >
             <!-- to="/" 对应路由 path: '/' → Home -->
             <van-tabbar-item to="/" icon="home-o">首页</van-tabbar-item>
@@ -57,3 +77,15 @@ const active = ref(0)
         </van-tabbar>
     </div>
 </template>
+
+<style>
+.app-tabbar {
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.app-tabbar .van-tabbar-item--active {
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
+}
+</style>

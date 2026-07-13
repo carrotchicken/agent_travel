@@ -33,13 +33,13 @@ const isLoading = ref(false)
 // ============================================================
 
 // 所有可选城市列表
-const cities = [
+const cities = [...new Set([
     '北京', '上海', '广州', '深圳', '成都', '杭州', '西安', '重庆',
     '南京', '武汉', '苏州', '长沙', '天津', '郑州', '济南', '青岛',
     '大连', '沈阳', '哈尔滨', '长春', '福州', '厦门', '南昌', '合肥',
     '昆明', '贵阳', '南宁', '桂林', '海口', '三亚', '丽江', '大理',
-    '西安', '兰州', '乌鲁木齐', '拉萨', '呼和浩特', '太原', '石家庄'
-]
+    '兰州', '乌鲁木齐', '拉萨', '呼和浩特', '太原', '石家庄'
+])]
 
 // 热门城市（取前 8 个）
 const popularCities = cities.slice(0, 8)
@@ -130,88 +130,100 @@ const selectedCity = (city) => {
 </script>
 
 <template>
-    <div class="page-container">
+    <div class="page-container home-page">
         <!-- ====== 顶部导航 ====== -->
         <div class="page-header">
-            <van-nav-bar background="linear-gradient(90deg, #D09D69 0%, #E0C1A1 100%)" title="智能旅游助手"/>
+            <van-nav-bar title="智能旅游助手" />
         </div>
-        
+
         <div class="page-content">
-            <!-- ====== 通知栏 ====== -->
-            <van-notice-bar 
-                left-icon="info-o" 
-                text="基于 AI 的智能景点与行程规划系统" 
-                style="margin-bottom: 16px;" 
-            />
-            
+            <!-- ====== 欢迎横幅 ====== -->
+            <div class="welcome-banner">
+                <div class="banner-text">
+                    <h1 class="banner-title">AI 智能规划</h1>
+                    <p class="banner-sub">你的专属旅行管家</p>
+                </div>
+                <div class="banner-icon">✈️</div>
+            </div>
+
             <!-- ====== 搜索表单 ====== -->
-            <div class="card search-card">
+            <div class="card search-card fade-in-up">
                 <div class="section-title">规划你的行程</div>
-                
+
                 <!-- 目的地选择 -->
-                <van-field 
-                    is-link 
-                    readonly 
-                    v-model="formData.city" 
-                    @click="showPicker = true" 
-                    label="目的地" 
+                <van-field
+                    is-link
+                    readonly
+                    v-model="formData.city"
+                    @click="showPicker = true"
+                    label="目的地"
                     placeholder="请选择目的地城市"
-                    style="background-color: #f7f8fa; border-radius: 8px; margin-bottom: 12px;" 
+                    class="form-field"
                 />
-                
+
                 <!-- 预算输入 -->
                 <van-field
                     v-model="formData.budget"
                     type="number"
                     label="预算"
                     placeholder="请输入您的预算（元）"
-                    style="background-color: #f7f8fa; border-radius: 8px; margin-bottom: 12px;"
+                    class="form-field"
                 />
-                
+
                 <!-- 天数输入 -->
                 <van-field
                     v-model="formData.days"
                     type="digit"
                     label="天数"
                     placeholder="请输入旅行天数"
-                    style="background-color: #f7f8fa; border-radius: 8px; margin-bottom: 12px;"
+                    class="form-field"
                 />
-                
+
                 <!-- 提交按钮 -->
-                <van-button 
-                    type="primary" 
-                    size="large" 
-                    round 
-                    :loading="isLoading" 
+                <van-button
+                    type="primary"
+                    size="large"
+                    class="submit-btn primary-gradient-btn"
+                    :loading="isLoading"
                     @click="handleSubmit">
                     开始规划
                 </van-button>
             </div>
-            
+
             <!-- ====== 快捷入口 ====== -->
-            <div class="card quick-actions">
+            <div class="card quick-actions fade-in-up">
                 <div class="section-title">快捷入口</div>
-                <van-grid :column-num="2" :gutter="12">
-                    <van-grid-item @click="goPage('/chat')" icon="chat-o" text="AI对话" />
-                    <van-grid-item @click="goPage('/profile')" icon="user-o" text="我的" />
-                </van-grid>
-            </div>
-            
-            <!-- ====== 热门目的地 ====== -->
-            <div class="card popular-destination">
-                <div class="section-title">热门目的地</div>
-                <van-grid :column-num="4">
-                    <van-grid-item 
-                        @click="selectedCity(city)" 
-                        v-for="(city, index) in popularCities" 
-                        :key="index">
-                        <div class="city-tag" :class="{ active: formData.city === city }">
-                            {{ city }}
+                <van-grid :column-num="2" :gutter="12" :border="false">
+                    <van-grid-item @click="goPage('/chat')">
+                        <div class="quick-item">
+                            <div class="quick-icon chat-icon">💬</div>
+                            <span class="quick-text">AI 对话</span>
+                        </div>
+                    </van-grid-item>
+                    <van-grid-item @click="goPage('/profile')">
+                        <div class="quick-item">
+                            <div class="quick-icon profile-icon">👤</div>
+                            <span class="quick-text">我的</span>
                         </div>
                     </van-grid-item>
                 </van-grid>
             </div>
-            
+
+            <!-- ====== 热门目的地 ====== -->
+            <div class="card popular-destination fade-in-up">
+                <div class="section-title">热门目的地</div>
+                <div class="city-tags">
+                    <div
+                        class="city-tag"
+                        :class="{ active: formData.city === city }"
+                        v-for="(city, index) in popularCities"
+                        :key="index"
+                        @click="selectedCity(city)">
+                        {{ city }}
+                    </div>
+                </div>
+            </div>
+
             <!-- ====== 城市选择弹出层 ====== -->
             <van-popup round v-model:show="showPicker" position="bottom">
                 <van-picker
@@ -225,27 +237,123 @@ const selectedCity = (city) => {
     </div>
 </template>
 <style scoped>
-.page-content {
-    margin-top: 20px;
+.home-page .page-content {
+    padding-top: 0;
 }
 
+/* ---- 欢迎横幅 ---- */
+.welcome-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 15px;
+    padding: 30px 30px;
+    background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+    margin: 10px 7px 15px 7px;
+    border-radius: 8px;
+    color: #fff;
+}
+
+.banner-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 4px;
+}
+
+.banner-sub {
+    font-size: 13px;
+    opacity: 0.9;
+    margin: 0;
+}
+
+.banner-icon {
+    font-size: 40px;
+    opacity: 0.9;
+}
+
+/* ---- 表单 ---- */
 .search-card {
     margin-bottom: 16px;
 }
 
+.form-field {
+    background-color: #f7f8fa !important;
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+
+.form-field :deep(.van-field__body) {
+    padding-right: 12px;
+}
+
+.submit-btn {
+    width: 100%;
+    margin-top: 8px;
+    height: 46px;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+/* ---- 快捷入口 ---- */
+.quick-actions {
+    margin-bottom: 16px;
+}
+
+.quick-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+}
+
+.quick-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    background: linear-gradient(135deg, #fff1e8 0%, #ffe4d6 100%);
+    transition: transform 0.2s ease;
+}
+
+.quick-item:active .quick-icon {
+    transform: scale(0.95);
+}
+
+.quick-text {
+    font-size: 13px;
+    color: #333;
+}
+
+/* ---- 热门城市 ---- */
+.city-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-start;
+}
+
 .city-tag {
-    padding: 8px 12px;
-    border-radius: 16px;
-    font-size: 14px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
     color: #666;
-    background-image: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%);
-    transition: all 0.3s;
+    background: #fff5ef;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.city-tag:active {
+    transform: scale(0.96);
 }
 
 .city-tag.active {
-    background-image: linear-gradient(to top, #a8edea 0%, #fed6e3 100%);
+    background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
     color: #fff;
-
+    box-shadow: 0 4px 10px rgba(255, 107, 53, 0.25);
 }
-
 </style>

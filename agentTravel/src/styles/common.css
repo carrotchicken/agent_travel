@@ -1,85 +1,154 @@
 /* ============================================================
-   全局公共样式
-   作用：定义整个项目通用的布局、卡片、按钮样式
-   被 main.js 全局引入，所有页面都能使用这些类名
+   全局公共样式 · 活力橙主题
    ============================================================ */
 
-/* ---- 页面容器 ---- */
+/* ---- Vant 主题变量覆盖 ---- */
+:root {
+  /* 主色：活力橙 */
+  --van-primary-color: #ff6b35;
+  --van-primary-color-light: #fff1e8;
+  --van-primary-color-dark: #e55a2b;
 
-/* 所有页面的外层包装器，设置最小高度和统一背景色 */
+  /* 功能色 */
+  --van-success-color: #07c160;
+  --van-warning-color: #ff976a;
+  --van-danger-color: #ee0a24;
+  --van-text-color: #1a1a1a;
+  --van-text-color-2: #666666;
+  --van-text-color-3: #999999;
+
+  /* 圆角 */
+  --van-radius-lg: 12px;
+  --van-radius-md: 8px;
+  --van-radius-sm: 4px;
+
+  /* 字体 */
+  --van-font-size-md: 14px;
+  --van-font-size-lg: 16px;
+
+  /* 导航栏 */
+  --van-nav-bar-height: 46px;
+  --van-nav-bar-background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  --van-nav-bar-title-text-color: #ffffff;
+  --van-nav-bar-icon-color: #ffffff;
+  --van-nav-bar-arrow-size: 18px;
+
+  /* Tabbar */
+  --van-tabbar-height: 50px;
+  --van-tabbar-background: #ffffff;
+  --van-tabbar-item-active-color: #ff6b35;
+  --van-tabbar-item-text-color: #969799;
+  --van-tabbar-item-font-size: 10px;
+
+  /* 按钮 */
+  --van-button-primary-background: #ff6b35;
+  --van-button-primary-border-color: #ff6b35;
+  --van-button-border-radius: 24px;
+  --van-button-default-height: 44px;
+
+  /* 单元格 */
+  --van-cell-background: #ffffff;
+  --van-cell-text-color: #323233;
+  --van-cell-label-color: #969799;
+  --van-cell-border-color: #f0f0f0;
+
+  /* 标签 */
+  --van-tag-primary-background: #ff6b35;
+  --van-tag-primary-border-color: #ff6b35;
+
+  /* 加载 */
+  --van-loading-spinner-color: #ff6b35;
+
+  /* Toast */
+  --van-toast-background: rgba(50, 50, 51, 0.9);
+}
+
+/* ---- 页面容器 ---- */
 .page-container {
   min-height: 100vh;
-  background-color: #f5f5f5;
-  padding-bottom: 70px;   /* 底部留空，避开 tabbar（约50px） + 安全区 */
+  background-color: #fff8f5;
+  padding-bottom: 70px;
 }
 
 /* ---- 页面头部 ---- */
-
-/* 顶部导航栏：sticky 吸顶，z-index 保证不被内容遮挡 */
 .page-header {
   position: sticky;
   top: 0;
   z-index: 100;
-  background-color: #fff;
 }
 
 /* ---- 页面内容区 ---- */
-
-/* 统一的内容区域内边距 */
 .page-content {
   padding: 16px;
 }
 
 /* ---- 按钮 ---- */
-
-/* 通用按钮基础样式 */
 .common-button {
   width: 100%;
   height: 44px;
   line-height: 44px;
   font-size: 16px;
-  border-radius: 8px;
+  border-radius: 24px;
 }
 
-/* 主要按钮（品牌蓝色） */
-.primary-button {
-  background-color: #1989fa !important;
+/* 渐变主按钮 */
+.primary-gradient-btn {
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%) !important;
   border: none !important;
+  color: #fff !important;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+  transition: all 0.2s ease;
 }
 
-/* 次要按钮（白底蓝字描边） */
+.primary-gradient-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
+}
+
 .secondary-button {
   background-color: #fff !important;
-  color: #1989fa !important;
-  border: 1px solid #1989fa !important;
+  color: #ff6b35 !important;
+  border: 1px solid #ff6b35 !important;
 }
 
 /* ---- 卡片 ---- */
-
-/* 通用卡片：白底、圆角、轻阴影，用于信息展示区块 */
 .card {
   background-color: #fff;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 16px;
   margin-bottom: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 12px rgba(255, 107, 53, 0.06);
+  transition: box-shadow 0.2s ease;
 }
 
-/* 卡片内的小标题 */
+.card:active {
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.04);
+}
+
+/* 卡片标题 */
 .section-title {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 600;
-  color: #323233;
-  margin-bottom: 12px;
+  color: #1a1a1a;
+  margin-bottom: 14px;
+  position: relative;
+  padding-left: 10px;
+}
+
+.section-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 16px;
+  background: linear-gradient(180deg, #ff6b35, #f7931e);
+  border-radius: 2px;
 }
 
 /* ---- 动效 ---- */
-
-/**
- * 闪烁光标动画：用于 AI 流式输出时尾部光标效果
- * blink 动画分两阶段：完全显示 → 完全透明 → 完全显示，循环 1s
- * 使用场景：Chat 页面 AI 回复末尾的光标
- */
 .streaming-cursor {
   display: inline-block;
   animation: blink 1s infinite;
@@ -90,12 +159,42 @@
   50% { opacity: 0; }
 }
 
-/* ---- 加载容器 ---- */
+/* 淡入动画 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-/* 居中的加载指示器容器 */
+.fade-in-up {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+/* ---- 加载容器 ---- */
 .loading-container {
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 40px 0;
+}
+
+/* ---- 输入框统一样式 ---- */
+.field-block {
+  background-color: #f7f8fa;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+/* ---- 标签统一样式 ---- */
+.tag-orange {
+  background: #fff1e8;
+  color: #ff6b35;
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: 12px;
 }
