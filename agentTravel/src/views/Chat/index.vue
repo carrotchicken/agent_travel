@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, nextTick, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { fetchStream } from '@/utils/request'
+import { fetchStream, getErrorMessage } from '@/utils/request'
 import { showToast, showDialog } from 'vant'
 import ChatBubble from '@/components/ChatBubble.vue'
 import { useTravelStore } from '@/stores/travel'
@@ -19,6 +19,10 @@ const isStreaming = ref(false)
 const inputMessage = ref('')
 // 历史会话侧边栏显示
 const showHistory = ref(false)
+// 最近一次待重试的用户消息
+const lastSentMessage = ref('')
+// 是否允许展示“重新生成”提示（仅失败/中断后）
+const retryEnabled = ref(false)
 
 // 直接用 store 里的消息列表（响应式）
 const messages = computed(() => chatStore.messages)
@@ -26,6 +30,10 @@ const messages = computed(() => chatStore.messages)
 // 发送按钮是否禁用
 const isSendDisabled = computed(() => {
   return !inputMessage.value.trim() || isStreaming.value
+})
+
+const canRetry = computed(() => {
+  return retryEnabled.value && !isStreaming.value && !!lastSentMessage.value
 })
 
 // 快捷问题列表
@@ -36,6 +44,20 @@ const quickQuestions = ref([
   '预算3000元能去哪里玩？'
 ])
 
+// 当前流式请求句柄（用于取消）
+let streamHandle = null
+
+/**
+ * 构建多轮对话历史（最近 10 条，排除空的 AI 占位消息）
+ */
+const buildChatHistory = () => {
+  return chatStore.messages
+    .slice(0, -1)
+    .slice(-10)
+    .filter(m => m.content?.trim())
+    .map(m => ({ role: m.role, content: m.content }))
+}
+
 // 返回上一页
 const onBack = () => {
   router.back()
@@ -44,12 +66,18 @@ const onBack = () => {
 // 聊天区域 DOM 引用
 const chatContainerRef = ref(null)
 
-// 滚动到底部（使用 requestAnimationFrame 确保 DOM 更新后再滚动）
-const scrollToBottom = () => {
+const isUserAtBottom = () => {
+  const el = chatContainerRef.value
+  if (!el) return false
+  const { scrollTop, scrollHeight, clientHeight } = el
+  return scrollTop + clientHeight >= scrollHeight - 50
+}
+
+const scrollToBottom = (force = false) => {
   nextTick(() => {
     requestAnimationFrame(() => {
       const el = chatContainerRef.value
-      if (el) {
+      if (el && (force || isUserAtBottom())) {
         el.scrollTop = el.scrollHeight
       }
     })
@@ -64,7 +92,7 @@ const addUserMessage = (content) => {
     content,
     timestamp: new Date().toISOString()
   })
-  scrollToBottom()
+  scrollToBottom(true)
 }
 
 // 点击快捷问题
@@ -74,14 +102,32 @@ const handleClickTag = (q) => {
   sendMessage()
 }
 
+const stopStreaming = () => {
+  if (streamHandle) {
+    streamHandle.abort()
+    streamHandle = null
+  }
+  isStreaming.value = false
+  retryEnabled.value = true
+}
+
 // 发送消息
 const sendMessage = () => {
   const msg = inputMessage.value.trim()
   if (!msg || isStreaming.value) return
 
+  lastSentMessage.value = msg
+  retryEnabled.value = false
   addUserMessage(msg)
   inputMessage.value = ''
   fetchAIResponse(msg)
+}
+
+const retryLastMessage = () => {
+  if (!canRetry.value) return
+  inputMessage.value = lastSentMessage.value
+  retryEnabled.value = false
+  sendMessage()
 }
 
 // 获取 AI 回复（流式）
@@ -100,9 +146,9 @@ const fetchAIResponse = (userMsg) => {
 
   let fullResponse = ''
 
-  fetchStream(
+  streamHandle = fetchStream(
     'chat',
-    { message: userMsg },
+    { message: userMsg, history: buildChatHistory() },
     // onChunk
     (chunk) => {
       fullResponse += chunk
@@ -112,13 +158,21 @@ const fetchAIResponse = (userMsg) => {
     // onComplete
     () => {
       isStreaming.value = false
+      streamHandle = null
+      retryEnabled.value = false
       scrollToBottom()
+      setTimeout(() => {
+        scrollToBottom()
+      }, 300)
     },
     // onError
-    (errMsg) => {
-      chatStore.updateLastAIMessage(`抱歉，AI 发生了错误：${errMsg || '未知错误'}`)
+    (err) => {
+      const msg = getErrorMessage(err)
+      chatStore.updateLastAIMessage(`抱歉，发生了错误：${msg}`)
       isStreaming.value = false
-      showToast('AI 发生了错误，请稍后重试')
+      streamHandle = null
+      retryEnabled.value = true
+      showToast(msg)
       scrollToBottom()
     }
   )
@@ -126,6 +180,9 @@ const fetchAIResponse = (userMsg) => {
 
 // 新建对话
 const handleNewChat = () => {
+  stopStreaming()
+  lastSentMessage.value = ''
+  retryEnabled.value = false
   chatStore.createNewSession()
   showHistory.value = false
   scrollToBottom()
@@ -133,6 +190,9 @@ const handleNewChat = () => {
 
 // 切换会话
 const handleSwitchSession = (sessionId) => {
+  stopStreaming()
+  lastSentMessage.value = ''
+  retryEnabled.value = false
   chatStore.switchSession(sessionId)
   showHistory.value = false
   scrollToBottom()
@@ -144,6 +204,11 @@ const handleDeleteSession = (sessionId) => {
     title: '删除对话',
     message: '确定删除这个对话记录吗？'
   }).then(() => {
+    stopStreaming()
+    if (sessionId === chatStore.currentSessionId) {
+      lastSentMessage.value = ''
+      retryEnabled.value = false
+    }
     chatStore.deleteSession(sessionId)
     showToast('已删除')
   }).catch(() => {})
@@ -170,6 +235,7 @@ onMounted(() => {
       chatStore.createNewSession()
     }
     inputMessage.value = `我想了解一下${route.query.city}的旅游景点`
+    retryEnabled.value = false
     sendMessage()
   }
   scrollToBottom()
@@ -188,7 +254,18 @@ onMounted(() => {
         @click-left="onBack"
       >
         <template #right>
-          <van-icon name="more-o" size="20" @click="showHistory = true" />
+          <div class="header-actions">
+            <van-button
+              v-if="isStreaming"
+              size="small"
+              plain
+              type="primary"
+              @click="stopStreaming"
+            >
+              停止生成
+            </van-button>
+            <van-icon name="more-o" size="20" @click="showHistory = true" />
+          </div>
         </template>
       </van-nav-bar>
     </div>
@@ -205,7 +282,6 @@ onMounted(() => {
               v-for="q in quickQuestions"
               :key="q"
               size="large"
-              mark
               type="primary"
               @click="handleClickTag(q)">
               {{ q }}
@@ -231,22 +307,30 @@ onMounted(() => {
 
     <!-- ====== 底部输入区域 ====== -->
     <div class="chat-input-area">
+      <div v-if="isStreaming" class="stream-tip">
+        <span>AI 正在生成回复...</span>
+        <van-button size="mini" plain type="primary" @click="stopStreaming">停止</van-button>
+      </div>
       <van-field
         v-model="inputMessage"
         placeholder="输入您的问题...."
         :disabled="isStreaming"
         @keyup.enter="sendMessage"
-        clearable >
+        clearable>
         <template #button>
           <van-button
             @click="sendMessage"
             type="primary"
             size="small"
-            :disabled="isSendDisabled" >
+            :disabled="isSendDisabled">
             发送
           </van-button>
         </template>
       </van-field>
+      <div v-if="canRetry && lastSentMessage" class="retry-link-row">
+        <span>上次回复中断了</span>
+        <van-button size="small" type="primary" link @click="retryLastMessage">重新生成</van-button>
+      </div>
     </div>
 
     <!-- ====== 历史会话侧边栏 ====== -->
@@ -306,7 +390,7 @@ onMounted(() => {
   flex-direction: column;
   height: 100vh;
   padding-bottom: 0 !important;
-  background: #fff8f5;
+  background: #f5f1e8;
 }
 
 .chat-container {
@@ -341,25 +425,32 @@ onMounted(() => {
 .quick-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px; /* 稍微加大标签间隙，减少拥挤 */
   justify-content: center;
-  padding: 0 16px;
+  /* 左右内边距大幅加宽，给两侧圆角预留充足空间 */
+  padding: 0 60px;
 }
 
 .quick-tag {
   background: #fff;
-  color: #ff6b35;
-  border: 1px solid #ffd0bf;
-  border-radius: 16px;
-  padding: 6px 14px;
+  color: #3b6892;
+  border: 1px solid #c5d6e6;
+  border-radius: 8px;
+  /* 加大左右内边距，缩短标签整体宽度，远离容器边缘 */
+  padding: 6px 16px;
   font-size: 13px;
   cursor: pointer;
   transition: all 0.2s ease;
+  /* 关键：给每个标签左右增加外边距，缩放时不会贴容器边缘 */
+  margin: 0 2px;
+  /* 防止缩放时边缘裁切 */
+  box-sizing: border-box;
 }
 
 .quick-tag:active {
-  background: #fff1e8;
-  transform: scale(0.96);
+  background: #e8f0f8;
+  /* 缩小幅度降低，避免过度挤压圆角 */
+  transform: scale(0.98);
 }
 
 /* ---- 消息列表 ---- */
@@ -379,7 +470,7 @@ onMounted(() => {
   background: #fff;
   border-radius: 0 12px 12px 12px;
   align-self: flex-start;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
 /* ---- 底部输入区 ---- */
@@ -390,20 +481,37 @@ onMounted(() => {
   right: 0;
   background: #fff;
   padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.03);
   max-width: 750px;
   margin: 0 auto;
   z-index: 100;
 }
 
+.stream-tip,
+.retry-link-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 4px 2px;
+  font-size: 12px;
+  color: #5a5a5a;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .chat-input-area :deep(.van-field) {
-  background: #f7f8fa;
+  background: #f7f5ee;
   border-radius: 22px;
   padding: 8px 8px 8px 16px;
 }
 
 .chat-input-area :deep(.van-button--primary) {
-  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%) !important;
+  background: linear-gradient(135deg, #3b6892 0%, #5a8ab8 100%) !important;
   border: none !important;
   border-radius: 18px !important;
   height: 32px;
@@ -417,7 +525,7 @@ onMounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #fff8f5;
+  background: #f5f1e8;
 }
 
 .history-header {
@@ -425,7 +533,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  background: linear-gradient(135deg, #3b6892 0%, #5a8ab8 100%);
   color: #fff;
 }
 
@@ -448,12 +556,12 @@ onMounted(() => {
 
 .history-session-item {
   background: #fff;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 14px;
   margin-bottom: 10px;
   position: relative;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.04);
+  box-shadow: 0 2px 8px rgba(59, 104, 146, 0.04);
   transition: all 0.2s ease;
 }
 
@@ -462,13 +570,13 @@ onMounted(() => {
 }
 
 .history-session-item.active {
-  border: 1px solid #ff6b35;
-  background: #fff5ef;
+  border: 1px solid #3b6892;
+  background: #f0f5fa;
 }
 
 .session-title {
   font-size: 14px;
-  color: #333;
+  color: #3c3c3c;
   font-weight: 500;
   margin-bottom: 6px;
   padding-right: 24px;
@@ -478,7 +586,7 @@ onMounted(() => {
 }
 
 .history-session-item.active .session-title {
-  color: #ff6b35;
+  color: #3b6892;
 }
 
 .session-meta {

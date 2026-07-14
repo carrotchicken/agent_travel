@@ -246,23 +246,36 @@ const selectedCity = (city) => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    height: 15px;
-    padding: 30px 30px;
-    background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
-    margin: 10px 7px 15px 7px;
-    border-radius: 8px;
+    padding: 20px 16px 16px;
+    background: linear-gradient(135deg, #3b6892 0%, #5a8ab8 100%);
+    margin: 10px 10px;
+    border-radius: 7px 7px;
     color: #fff;
+    position: relative;
+    overflow: hidden;
+}
+
+.welcome-banner::after {
+    content: '';
+    position: absolute;
+    right: -20px;
+    top: -20px;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle, rgba(216, 216, 159, 0.2) 0%, transparent 70%);
+    border-radius: 50%;
 }
 
 .banner-title {
     font-size: 22px;
     font-weight: 700;
     margin: 0 0 4px;
+    letter-spacing: 1px;
 }
 
 .banner-sub {
     font-size: 13px;
-    opacity: 0.9;
+    opacity: 0.85;
     margin: 0;
 }
 
@@ -277,8 +290,8 @@ const selectedCity = (city) => {
 }
 
 .form-field {
-    background-color: #f7f8fa !important;
-    border-radius: 8px;
+    background-color: #f7f5ee !important;
+    border-radius: 10px;
     margin-bottom: 12px;
 }
 
@@ -315,7 +328,7 @@ const selectedCity = (city) => {
     align-items: center;
     justify-content: center;
     font-size: 22px;
-    background: linear-gradient(135deg, #fff1e8 0%, #ffe4d6 100%);
+    background: linear-gradient(135deg, #e8f0f8 0%, #d4e4f2 100%);
     transition: transform 0.2s ease;
 }
 
@@ -325,7 +338,7 @@ const selectedCity = (city) => {
 
 .quick-text {
     font-size: 13px;
-    color: #333;
+    color: #3c3c3c;
 }
 
 /* ---- 热门城市 ---- */
@@ -340,8 +353,8 @@ const selectedCity = (city) => {
     padding: 8px 16px;
     border-radius: 20px;
     font-size: 13px;
-    color: #666;
-    background: #fff5ef;
+    color: #5c5c5c;
+    background: #ebe7d8;
     transition: all 0.2s ease;
     cursor: pointer;
     border: 1px solid transparent;
@@ -352,8 +365,8 @@ const selectedCity = (city) => {
 }
 
 .city-tag.active {
-    background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+    background: linear-gradient(135deg, #3b6892 0%, #5a8ab8 100%);
     color: #fff;
-    box-shadow: 0 4px 10px rgba(255, 107, 53, 0.25);
+    box-shadow: 0 4px 10px rgba(59, 104, 146, 0.25);
 }
 </style>

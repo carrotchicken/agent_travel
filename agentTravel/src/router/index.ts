@@ -1,7 +1,7 @@
 // ============================================================
-// 模块导入
+// 路由配置（TypeScript）
 // ============================================================
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import Home from '@/views/Home/index.vue'
 import Chat from '@/views/Chat/index.vue'
 import Profile from '@/views/Profile/index.vue'
@@ -12,7 +12,7 @@ import Register from '@/views/Register/index.vue'
 // ============================================================
 // 路由配置
 // ============================================================
-const routes = [
+const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'Home',
@@ -22,13 +22,13 @@ const routes = [
     path: '/chat',
     name: 'Chat',
     component: Chat,
-    meta: { requiresAuth: true }   // 需要登录
+    meta: { requiresAuth: true }
   },
   {
     path: '/profile',
     name: 'Profile',
     component: Profile,
-    meta: { requiresAuth: true }   // 需要登录
+    meta: { requiresAuth: true }
   },
   {
     path: '/detail',
@@ -58,7 +58,6 @@ const router = createRouter({
 // ============================================================
 // 全局导航守卫：需要登录的页面 + 已登录跳转
 // ============================================================
-
 router.beforeEach((to) => {
   // 从 localStorage 读取 token（不用 Pinia，因为守卫执行时 store 可能尚未初始化）
   const token = localStorage.getItem('auth_token')

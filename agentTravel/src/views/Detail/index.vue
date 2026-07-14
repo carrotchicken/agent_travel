@@ -1,7 +1,7 @@
 <script setup>
-import { onMounted, reactive, ref, computed } from 'vue';
+import { onMounted, onUnmounted, reactive, ref, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router'
-import { post } from '@/utils/request';
+import { fetchStream, getErrorMessage } from '@/utils/request';
 import { useTravelStore } from '@/stores/travel'
 import { showToast, showDialog } from 'vant'
 import SpotItem from '@/components/SpotItem.vue';
@@ -16,8 +16,35 @@ const travelStore = useTravelStore()
 
 // 加载状态
 const isloading = ref(true)
+// 流式生成中的原始预览文本
+const streamPreview = ref('')
 // 错误信息
 const errMsg = ref('')
+// 流式请求句柄
+let streamHandle = null
+
+// 分阶段 Loading 文案
+const loadingStages = [
+  '正在分析目的地与预算...',
+  '正在规划每日行程...',
+  '正在整理预算明细...',
+  '即将完成，请稍候...'
+]
+
+const loadingStageIndex = computed(() => {
+  const len = streamPreview.value.length
+  if (len < 200) return 0
+  if (len < 800) return 1
+  if (len < 2000) return 2
+  return 3
+})
+
+const currentLoadingStage = computed(() => loadingStages[loadingStageIndex.value])
+
+// 估算进度（基于字符数，上限 95%）
+const streamProgress = computed(() => {
+  return Math.min(95, Math.floor(streamPreview.value.length / 30))
+})
 
 // 表单数据（从首页 query 参数获取）
 const formData = reactive({
@@ -49,38 +76,61 @@ const onBack = () => {
 }
 
 /**
- * 请求后端生成行程规划
+ * 应用行程数据到页面
  */
-const fetchTripData = async () => {
+const applyTripData = (res) => {
+  tripData.value = res
+  travelStore.setTrip(res)
+  if (res.dailyItinerary) {
+    activeDays.value = res.dailyItinerary.map(d => d.day)
+  }
+}
+
+/**
+ * 请求后端流式生成行程规划
+ */
+const fetchTripData = () => {
+  if (streamHandle) {
+    streamHandle.abort()
+    streamHandle = null
+  }
+
   isloading.value = true
+  streamPreview.value = ''
   errMsg.value = ''
-  try {
-    const res = await post('recommend', {
+  tripData.value = null
+
+  streamHandle = fetchStream(
+    'recommend',
+    {
       city: formData.city,
       budget: formData.budget,
       days: formData.days
-    })
+    },
+    // onChunk — 实时累积 AI 输出
+    (chunk) => {
+      streamPreview.value += chunk
+    },
+    // onComplete — 收到解析后的行程 JSON
+    (data) => {
+      isloading.value = false
+      streamHandle = null
 
-    if (res && res.success === true) {
-      tripData.value = res
-      // 写入 Pinia Store，供 Chat/Profile 页面跨页面访问
-      travelStore.setTrip(res)
-      // 默认展开所有天数
-      if (res.dailyItinerary) {
-        activeDays.value = res.dailyItinerary.map(d => d.day)
+      if (data && data.success !== false) {
+        applyTripData(data)
+      } else if (data?.error) {
+        errMsg.value = data.error
+      } else {
+        errMsg.value = '行程数据解析失败，请稍后重试'
       }
-    } else if (res && res.error) {
-      errMsg.value = res.error
-    } else {
-      console.error('后端返回了异常数据:', res)
-      errMsg.value = '行程数据解析失败，请稍后重试'
+    },
+    // onError
+    (err) => {
+      isloading.value = false
+      streamHandle = null
+      errMsg.value = getErrorMessage(err)
     }
-  } catch (err) {
-    console.error('请求行程规划失败:', err)
-    errMsg.value = err.message || '网络请求失败，请检查后端服务是否启动'
-  } finally {
-    isloading.value = false
-  }
+  )
 }
 
 /**
@@ -190,6 +240,13 @@ onMounted(() => {
     errMsg.value = '缺少必要的出行信息，请返回首页重新填写'
   }
 })
+
+onUnmounted(() => {
+  if (streamHandle) {
+    streamHandle.abort()
+    streamHandle = null
+  }
+})
 </script>
 
 <template>
@@ -206,7 +263,7 @@ onMounted(() => {
           <van-icon
             :name="isFavorited ? 'star-fill' : 'star-o'"
             size="20"
-            :color="isFavorited ? '#ff976a' : '#969799'"
+            :color="isFavorited ? '#ff976a' : '#d8d89f'"
             @click="handleToggleFavorite"
           />
         </template>
@@ -214,11 +271,21 @@ onMounted(() => {
     </div>
 
     <div class="page-content">
-      <!-- Loading 状态 -->
+      <!-- Loading 状态（流式生成中） -->
       <div v-if="isloading" class="loading-container">
-        <van-loading size="48px" type="spinner" vertical>
-          正在生成旅游规划...
-        </van-loading>
+        <div class="stream-loading card">
+          <van-loading size="36px" type="spinner" />
+          <h3 class="loading-title">AI 正在为你规划行程</h3>
+          <p class="loading-stage">{{ currentLoadingStage }}</p>
+          <van-progress
+            :percentage="streamProgress"
+            stroke-width="6"
+            color="linear-gradient(90deg, #3b6892, #5a8ab8)"
+            :show-pivot="false"
+            class="loading-progress"
+          />
+          <p class="loading-hint">已生成 {{ streamPreview.length }} 字，请耐心等待...</p>
+        </div>
       </div>
 
       <!-- 错误状态 -->
@@ -343,7 +410,7 @@ onMounted(() => {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #ff6b35, #f7931e);
+  background: linear-gradient(90deg, #3b6892, #8c8732);
 }
 
 .trip-header {
@@ -363,14 +430,14 @@ onMounted(() => {
 
 .trip-header h2 {
   font-size: 20px;
-  color: #1a1a1a;
+  color: #2c2c2c;
   margin: 0;
   font-weight: 700;
 }
 
 .mode-tag {
-  background: #fff1e8 !important;
-  color: #ff6b35 !important;
+  background: #e8f0f8 !important;
+  color: #3b6892 !important;
   border: none !important;
   border-radius: 10px !important;
   padding: 0 8px !important;
@@ -383,7 +450,7 @@ onMounted(() => {
 
 .budget-num {
   font-size: 22px;
-  color: #ff6b35;
+  color: #3b6892;
   font-weight: 700;
   display: block;
   line-height: 1.2;
@@ -409,22 +476,22 @@ onMounted(() => {
 }
 
 .export-btn {
-  color: #ff6b35 !important;
-  border-color: #ffd0bf !important;
-  background: #fff8f5 !important;
+  color: #3b6892 !important;
+  border-color: #c5d6e6 !important;
+  background: #f0f5fa !important;
 }
 
 /* ---- 每日行程 ---- */
 .day-collapse {
   margin-bottom: 16px;
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 2px 12px rgba(255, 107, 53, 0.06);
+  box-shadow: 0 2px 12px rgba(59, 104, 146, 0.06);
 }
 
 .day-collapse :deep(.van-collapse-item__title) {
   font-weight: 600;
-  color: #1a1a1a;
+  color: #2c2c2c;
   padding: 14px 16px;
 }
 
@@ -445,28 +512,27 @@ onMounted(() => {
 }
 
 .section-label {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   padding: 4px 10px;
   border-radius: 12px;
   display: inline-block;
   margin-bottom: 10px;
-  font-size: 13px;
 }
 
 .section-label.morning {
-  background: #fff4e6;
-  color: #fa8c16;
+  background: #f0ece0;
+  color: #8c8732;
 }
 
 .section-label.afternoon {
-  background: #e6f4ff;
-  color: #1677ff;
+  background: #e8f0f8;
+  color: #3b6892;
 }
 
 .section-label.evening {
-  background: #f0f5ff;
-  color: #722ed1;
+  background: #ece8f0;
+  color: #6b5c8c;
 }
 
 /* ---- 预算/提示卡片 ---- */
@@ -486,11 +552,11 @@ onMounted(() => {
 .tips-list li,
 .warnings-list li {
   padding: 10px 0;
-  color: #555;
+  color: #5c5c5c;
   font-size: 14px;
-  border-bottom: 1px solid #f7f7f7;
+  border-bottom: 1px solid #f5f2eb;
   line-height: 1.6;
-  padding-left: 16px;
+  padding-left: 20px;
   position: relative;
 }
 
@@ -523,7 +589,7 @@ onMounted(() => {
   right: 0;
   padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
   background: #fff;
-  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.04);
   max-width: 750px;
   margin: 0 auto;
   z-index: 100;
@@ -544,7 +610,37 @@ onMounted(() => {
 .loading-container {
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   min-height: 300px;
+  padding: 16px;
+}
+
+.stream-loading {
+  width: 100%;
+  text-align: center;
+  padding: 32px 24px;
+}
+
+.loading-title {
+  font-size: 18px;
+  color: #2c2c2c;
+  margin: 16px 0 8px;
+  font-weight: 600;
+}
+
+.loading-stage {
+  font-size: 14px;
+  color: #3b6892;
+  margin: 0 0 20px;
+}
+
+.loading-progress {
+  margin-bottom: 12px;
+}
+
+.loading-hint {
+  font-size: 12px;
+  color: #999;
+  margin: 0;
 }
 </style>

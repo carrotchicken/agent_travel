@@ -1,26 +1,26 @@
 /* ============================================================
-   全局公共样式 · 活力橙主题
+   全局公共样式 · 敦煌风主题
    ============================================================ */
 
 /* ---- Vant 主题变量覆盖 ---- */
 :root {
-  /* 主色：活力橙 */
-  --van-primary-color: #ff6b35;
-  --van-primary-color-light: #fff1e8;
-  --van-primary-color-dark: #e55a2b;
+  /* 主色：海海蓝 - 敦煌深青蓝 */
+  --van-primary-color: #3b6892;
+  --van-primary-color-light: #e8f0f8;
+  --van-primary-color-dark: #2d5275;
 
   /* 功能色 */
-  --van-success-color: #07c160;
-  --van-warning-color: #ff976a;
-  --van-danger-color: #ee0a24;
-  --van-text-color: #1a1a1a;
-  --van-text-color-2: #666666;
+  --van-success-color: #5a8a5c;
+  --van-warning-color: #c9a962;
+  --van-danger-color: #b85450;
+  --van-text-color: #2c2c2c;
+  --van-text-color-2: #5c5c5c;
   --van-text-color-3: #999999;
 
-  /* 圆角 */
-  --van-radius-lg: 12px;
-  --van-radius-md: 8px;
-  --van-radius-sm: 4px;
+  /* 圆角 - 偏圆润，有壁画感 */
+  --van-radius-lg: 16px;
+  --van-radius-md: 10px;
+  --van-radius-sm: 6px;
 
   /* 字体 */
   --van-font-size-md: 14px;
@@ -28,7 +28,7 @@
 
   /* 导航栏 */
   --van-nav-bar-height: 46px;
-  --van-nav-bar-background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  --van-nav-bar-background: linear-gradient(135deg, #3b6892 0%, #5a8ab8 100%);
   --van-nav-bar-title-text-color: #ffffff;
   --van-nav-bar-icon-color: #ffffff;
   --van-nav-bar-arrow-size: 18px;
@@ -36,13 +36,13 @@
   /* Tabbar */
   --van-tabbar-height: 50px;
   --van-tabbar-background: #ffffff;
-  --van-tabbar-item-active-color: #ff6b35;
+  --van-tabbar-item-active-color: #3b6892;
   --van-tabbar-item-text-color: #969799;
   --van-tabbar-item-font-size: 10px;
 
   /* 按钮 */
-  --van-button-primary-background: #ff6b35;
-  --van-button-primary-border-color: #ff6b35;
+  --van-button-primary-background: #3b6892;
+  --van-button-primary-border-color: #3b6892;
   --van-button-border-radius: 24px;
   --van-button-default-height: 44px;
 
@@ -50,14 +50,14 @@
   --van-cell-background: #ffffff;
   --van-cell-text-color: #323233;
   --van-cell-label-color: #969799;
-  --van-cell-border-color: #f0f0f0;
+  --van-cell-border-color: #f0ebe0;
 
   /* 标签 */
-  --van-tag-primary-background: #ff6b35;
-  --van-tag-primary-border-color: #ff6b35;
+  --van-tag-primary-background: #3b6892;
+  --van-tag-primary-border-color: #3b6892;
 
   /* 加载 */
-  --van-loading-spinner-color: #ff6b35;
+  --van-loading-spinner-color: #3b6892;
 
   /* Toast */
   --van-toast-background: rgba(50, 50, 51, 0.9);
@@ -66,7 +66,7 @@
 /* ---- 页面容器 ---- */
 .page-container {
   min-height: 100vh;
-  background-color: #fff8f5;
+  background-color: #f5f1e8;
   padding-bottom: 70px;
 }
 
@@ -91,46 +91,46 @@
   border-radius: 24px;
 }
 
-/* 渐变主按钮 */
+/* 渐变主按钮 - 敦煌蓝 */
 .primary-gradient-btn {
-  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%) !important;
+  background: linear-gradient(135deg, #3b6892 0%, #5a8ab8 100%) !important;
   border: none !important;
   color: #fff !important;
   font-weight: 500;
-  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+  box-shadow: 0 4px 12px rgba(59, 104, 146, 0.25);
   transition: all 0.2s ease;
 }
 
 .primary-gradient-btn:active {
   transform: scale(0.98);
-  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
+  box-shadow: 0 2px 8px rgba(59, 104, 146, 0.2);
 }
 
 .secondary-button {
   background-color: #fff !important;
-  color: #ff6b35 !important;
-  border: 1px solid #ff6b35 !important;
+  color: #3b6892 !important;
+  border: 1px solid #3b6892 !important;
 }
 
 /* ---- 卡片 ---- */
 .card {
   background-color: #fff;
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 16px;
   margin-bottom: 12px;
-  box-shadow: 0 2px 12px rgba(255, 107, 53, 0.06);
+  box-shadow: 0 2px 12px rgba(59, 104, 146, 0.06);
   transition: box-shadow 0.2s ease;
 }
 
 .card:active {
-  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.04);
+  box-shadow: 0 2px 8px rgba(59, 104, 146, 0.04);
 }
 
-/* 卡片标题 */
+/* 卡片标题 - 双色装饰线 */
 .section-title {
   font-size: 17px;
-  font-weight: 600;
-  color: #1a1a1a;
+  font-weight: 700;
+  color: #2c2c2c;
   margin-bottom: 14px;
   position: relative;
   padding-left: 10px;
@@ -144,7 +144,7 @@
   transform: translateY(-50%);
   width: 3px;
   height: 16px;
-  background: linear-gradient(180deg, #ff6b35, #f7931e);
+  background: linear-gradient(180deg, #3b6892, #8c8732);
   border-radius: 2px;
 }
 
@@ -185,15 +185,15 @@
 
 /* ---- 输入框统一样式 ---- */
 .field-block {
-  background-color: #f7f8fa;
-  border-radius: 8px;
+  background-color: #f7f5ee;
+  border-radius: 10px;
   margin-bottom: 12px;
 }
 
 /* ---- 标签统一样式 ---- */
-.tag-orange {
-  background: #fff1e8;
-  color: #ff6b35;
+.tag-dunhuang {
+  background: #d8d89f;
+  color: #5c5c32;
   border-radius: 12px;
   padding: 2px 10px;
   font-size: 12px;

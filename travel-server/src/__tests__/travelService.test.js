@@ -13,8 +13,9 @@ vi.mock('@langchain/openai', () => {
 })
 
 vi.mock('@langchain/core/messages', () => ({
-  HumanMessage: vi.fn(),
-  SystemMessage: vi.fn()
+  HumanMessage: vi.fn((content) => ({ type: 'human', content })),
+  SystemMessage: vi.fn((content) => ({ type: 'system', content })),
+  AIMessage: vi.fn((content) => ({ type: 'ai', content }))
 }))
 
 vi.mock('dotenv/config', () => ({ default: {} }))
@@ -74,6 +75,31 @@ describe('TravelService', () => {
 
     it('天数 > 30 应抛出异常', async () => {
       await expect(service.recommend('北京', 2000, 31)).rejects.toThrow('天数只能在1~30天之间')
+    })
+  })
+
+  describe('buildChatMessages()', () => {
+    it('应包含系统提示词', () => {
+      const msgs = service.buildChatMessages('你好', [])
+      expect(msgs.length).toBeGreaterThanOrEqual(2)
+    })
+
+    it('应将历史消息转为对话上下文', () => {
+      const history = [
+        { role: 'user', content: '北京有什么好玩的？' },
+        { role: 'ai', content: '推荐故宫、长城。' }
+      ]
+      const msgs = service.buildChatMessages('那美食呢？', history)
+      expect(msgs.length).toBe(5)
+    })
+
+    it('历史超过 10 条时应截断', () => {
+      const history = Array.from({ length: 15 }, (_, i) => ({
+        role: i % 2 === 0 ? 'user' : 'ai',
+        content: `消息${i}`
+      }))
+      const msgs = service.buildChatMessages('最新消息', history)
+      expect(msgs.length).toBeLessThanOrEqual(12)
     })
   })
 })

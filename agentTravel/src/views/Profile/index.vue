@@ -1,9 +1,10 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast, showDialog } from 'vant'
 import { useTravelStore } from '@/stores/travel'
 import { useAuthStore } from '@/stores/auth'
+import storage from '@/utils/storage'
 
 const router = useRouter()
 const travelStore = useTravelStore()
@@ -14,6 +15,22 @@ const activeTab = ref('history')
 
 // 关于我们弹窗
 const aboutDialogVisible = ref(false)
+// 偏好设置弹窗
+const preferenceDialogVisible = ref(false)
+// 偏好设置内容
+const PREFS_KEY = 'travel_preferences'
+const travelPreferences = ref({
+  city: '',
+  budget: '',
+  days: '',
+  theme: ''
+})
+
+// 页面挂载时加载已保存的偏好
+onMounted(() => {
+  const saved = storage.get(PREFS_KEY, null)
+  if (saved) Object.assign(travelPreferences.value, saved)
+})
 
 // 当前列表数据（根据 Tab 切换）
 const currentList = computed(() => {
@@ -95,6 +112,19 @@ const getTimeField = (item) => {
 const showAboutDialog = () => {
   aboutDialogVisible.value = true
 }
+
+const showPreferenceDialog = () => {
+  preferenceDialogVisible.value = true
+}
+
+const savePreferences = () => {
+  storage.set(PREFS_KEY, { ...travelPreferences.value })
+  preferenceDialogVisible.value = false
+  showToast('偏好已保存')
+}
+
+// 跳转首页
+const goHome = () => router.push('/')
 </script>
 
 <template>
@@ -102,7 +132,7 @@ const showAboutDialog = () => {
     <!-- 顶部导航 -->
     <van-nav-bar title="我的" :left-arrow="false" />
 
-    <!-- 用户信息 -->
+    <!-- 用户信息卡片 -->
     <div class="user-info">
       <van-image :src="authStore.displayAvatar" round class="avatar" />
       <div class="user-details">
@@ -118,29 +148,19 @@ const showAboutDialog = () => {
       </van-button>
     </div>
 
-    <!-- 行程管理 Tab 区 -->
+    <!-- 行程管理 Tab 卡片 -->
     <div class="trip-section">
-      <!-- Tab 切换 -->
       <van-tabs v-model:active="activeTab" sticky>
         <van-tab title="历史记录" name="history" />
         <van-tab title="我的收藏" name="favorite" />
       </van-tabs>
 
-      <!-- 列表头部：数量 + 清空 -->
       <div class="list-header">
-        <span class="list-count">
-          共 {{ currentList.length }} 条
-        </span>
-        <span
-          v-if="!listEmpty"
-          class="clear-btn"
-          @click="clearAll"
-        >
-          清空
-        </span>
+        <span class="list-count">共 {{ currentList.length }} 条行程</span>
+        <span v-if="!listEmpty" class="clear-btn" @click="clearAll">清空全部</span>
       </div>
 
-      <!-- 列表内容 -->
+      <!-- 有数据列表 -->
       <div v-if="!listEmpty" class="trip-list">
         <div
           v-for="(item, idx) in currentList"
@@ -152,9 +172,7 @@ const showAboutDialog = () => {
             <div class="trip-city">{{ item.city }}</div>
             <div class="trip-meta">
               {{ item.days }}天 · ¥{{ item.totalBudget }}
-              <span v-if="getTimeField(item)" class="trip-time">
-                 · {{ formatDate(getTimeField(item)) }}
-              </span>
+              <span v-if="getTimeField(item)" class="trip-time"> · {{ formatDate(getTimeField(item)) }}</span>
             </div>
           </div>
           <div class="trip-right">
@@ -170,29 +188,34 @@ const showAboutDialog = () => {
         </div>
       </div>
 
-      <!-- 空状态 -->
-      <van-empty
-        v-else
-        :description="activeTab === 'history' ? '暂无历史记录，去首页规划一次行程吧' : '暂无收藏，去详情页收藏喜欢的行程吧'"
-        :image-size="60"
-      />
+      <!-- 空状态美化 -->
+      <div v-else class="empty-wrap">
+        <van-empty
+          :description="activeTab === 'history' ? '暂无历史记录，去首页规划一次行程吧' : '暂无收藏，去详情页收藏喜欢的行程吧'"
+          :image-size="70"
+        />
+        <van-button type="primary" round size="small" class="empty-btn" @click="goHome">
+          去首页规划行程
+        </van-button>
+      </div>
     </div>
 
-    <!-- 我的服务 -->
+    <!-- 我的服务菜单卡片 -->
     <div class="menu-section">
       <h3 class="menu-title">我的服务</h3>
       <van-cell-group>
-        <van-cell title="设置" is-link icon="setting-o" @click="showToast('功能开发中')" />
+        <van-cell title="偏好设置" is-link icon="like-o" @click="showPreferenceDialog" />
         <van-cell
           v-if="authStore.isLoggedIn"
           title="退出登录"
           icon="revoke"
-          @click="authStore.logout(); showToast('已退出')"
+          class="logout-cell"
+          @click="authStore.logout(); showToast('已退出登录')"
         />
       </van-cell-group>
     </div>
 
-    <!-- 关于 -->
+    <!-- 关于菜单卡片 -->
     <div class="menu-section">
       <h3 class="menu-title">关于</h3>
       <van-cell-group>
@@ -201,13 +224,23 @@ const showAboutDialog = () => {
       </van-cell-group>
     </div>
 
-    <!-- 关于我们弹窗 -->
+    <!-- 偏好弹窗 -->
+    <van-dialog v-model:show="preferenceDialogVisible" title="偏好设置" show-cancel-button @confirm="savePreferences">
+      <div class="preference-content">
+        <van-field v-model="travelPreferences.city" label="常去城市" placeholder="例如：杭州、成都" />
+        <van-field v-model="travelPreferences.budget" label="预算范围" placeholder="例如：2000-5000" />
+        <van-field v-model="travelPreferences.days" label="出行天数" placeholder="例如：3天、5天" />
+        <van-field v-model="travelPreferences.theme" label="旅行偏好" placeholder="例如：美食、自然、人文" />
+      </div>
+    </van-dialog>
+
+    <!-- 关于弹窗 -->
     <van-dialog v-model:show="aboutDialogVisible" title="关于我们" show-cancel-button>
       <div class="about-content">
-        <p>智能旅游助手 v1.1.0</p>
-        <p class="mt-2">基于 AI 技术的智能旅游规划平台</p>
-        <p class="mt-2">为您提供个性化的旅游行程推荐和实时旅游咨询服务</p>
-        <p class="mt-4 text-center">© 2024 智能旅游助手</p>
+        <p class="text-lg">智能旅游助手 v1.1.0</p>
+        <p class="mt-2 text-gray">基于 AI 技术的智能旅游规划平台</p>
+        <p class="mt-2 text-gray">为您提供个性化旅游行程推荐与出行咨询</p>
+        <p class="mt-6 text-center text-light-gray">© 2026 智能旅游助手</p>
       </div>
     </van-dialog>
   </div>
@@ -215,79 +248,104 @@ const showAboutDialog = () => {
 
 <style scoped>
 .profile-container {
-  padding-bottom: 60px;
-  background: #fff8f5;
+  padding-bottom: 80px;
+  background: #f7f3eb;
   min-height: 100vh;
 }
 
-/* ---- 用户信息区 ---- */
+/* 顶部用户信息卡片 */
 .user-info {
   display: flex;
   align-items: center;
-  padding: 30px 20px 40px;
-  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
-  color: white;
-  border-radius: 0 0 20px 20px;
-  margin-top: -46px;
-  padding-top: 60px;
+  padding: 32px 20px 42px;
+  margin: 12px 12px 0;
+  background: linear-gradient(135deg, #325d86 0%, #5484b3 100%);
+  color: #fff;
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 6px 16px rgba(50, 93, 134, 0.18);
+}
+/* 背景装饰圆形光晕 */
+.user-info::after {
+  content: '';
+  position: absolute;
+  right: -40px;
+  bottom: -40px;
+  width: 160px;
+  height: 160px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, transparent 72%);
+  border-radius: 50%;
+}
+.user-info::before {
+  content: '';
+  position: absolute;
+  left: -60px;
+  top: -60px;
+  width: 140px;
+  height: 140px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
 }
 
 .avatar {
-  width: 64px;
-  height: 64px;
-  border: 3px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 86px;
+  height: 86px;
+  border: 3px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
 }
 
 .user-details {
-  margin-left: 16px;
+  margin-left: 18px;
+  z-index: 2;
 }
-
 .user-name {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
-  margin-bottom: 4px;
+  margin: 0 0 6px;
+  letter-spacing: 0.5px;
 }
-
 .user-desc {
   font-size: 13px;
-  opacity: 0.85;
+  opacity: 0.88;
   margin: 0;
 }
 
-/* 未登录提示 */
+/* 未登录按钮 */
 .login-prompt {
   text-align: right;
-  margin-top: -28px;
-  margin-bottom: 20px;
-  padding: 0 16px;
+  margin: -30px 16px 24px;
+  position: relative;
+  z-index: 3;
 }
-
 .login-prompt :deep(.van-button) {
   background: #fff !important;
-  color: #ff6b35 !important;
+  color: #325d86 !important;
   border: none !important;
   font-weight: 500;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* ---- 行程管理区 ---- */
+/* 行程Tab卡片 */
 .trip-section {
-  background-color: #fff;
-  border-radius: 12px;
-  margin: 16px 12px 0;
+  background-color: #ffffff;
+  border-radius: 20px;
+  margin: 20px 12px 0;
   overflow: hidden;
-  box-shadow: 0 2px 12px rgba(255, 107, 53, 0.06);
+  box-shadow: 0 3px 14px rgba(59, 104, 146, 0.06);
 }
-
+/* tab下划线美化 */
 .trip-section :deep(.van-tabs__line) {
-  background: linear-gradient(90deg, #ff6b35, #f7931e);
-  width: 24px !important;
-  border-radius: 2px;
+  background: linear-gradient(90deg, #325d86, #5484b3);
+  width: 30px !important;
+  border-radius: 99px;
+  height: 3px;
 }
-
+.trip-section :deep(.van-tab) {
+  font-size: 14px;
+}
 .trip-section :deep(.van-tab--active) {
-  color: #ff6b35 !important;
+  color: #325d86 !important;
   font-weight: 600;
 }
 
@@ -295,117 +353,129 @@ const showAboutDialog = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 16px;
-  border-bottom: 1px solid #f5f5f5;
+  padding: 12px 18px;
+  border-bottom: 1px solid #f3efe6;
 }
-
 .list-count {
   font-size: 13px;
   color: #999;
 }
-
 .clear-btn {
   font-size: 13px;
-  color: #ff6b35;
+  color: #325d86;
   cursor: pointer;
+  transition: opacity 0.2s;
+}
+.clear-btn:active {
+  opacity: 0.6;
 }
 
-/* ---- 行程列表 ---- */
-.trip-list {
-  padding: 0;
-}
-
+/* 行程列表项 */
 .trip-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 16px;
-  border-bottom: 1px solid #f7f7f7;
+  padding: 16px 18px;
+  border-bottom: 1px solid #f7f4ec;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background 0.24s ease;
 }
-
 .trip-item:last-child {
   border-bottom: none;
 }
-
 .trip-item:active {
-  background: #fff8f5;
+  background: #f7f3eb;
 }
-
 .trip-left {
   flex: 1;
   min-width: 0;
 }
-
 .trip-city {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
-  color: #1a1a1a;
-  margin-bottom: 4px;
+  color: #222;
+  margin-bottom: 5px;
 }
-
 .trip-meta {
-  font-size: 12px;
-  color: #999;
+  font-size: 12.5px;
+  color: #888;
 }
-
 .trip-time {
-  color: #bbb;
+  color: #aaa;
 }
-
 .trip-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   flex-shrink: 0;
-  margin-left: 8px;
 }
-
 .delete-icon {
-  padding: 4px;
+  padding: 5px;
+  transition: opacity 0.2s;
 }
-
 .delete-icon:active {
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
-/* ---- 菜单区块 ---- */
+/* 空状态区域 */
+.empty-wrap {
+  padding: 30px 20px 40px;
+  text-align: center;
+}
+.empty-btn {
+  margin-top: 16px;
+  background: linear-gradient(90deg, #325d86, #5484b3) !important;
+  border: none;
+}
+
+/* 菜单通用区块 */
 .menu-section {
   background-color: #fff;
-  border-radius: 12px;
-  margin: 16px 12px 0;
+  border-radius: 20px;
+  margin: 20px 12px 0;
   overflow: hidden;
-  box-shadow: 0 2px 12px rgba(255, 107, 53, 0.06);
+  box-shadow: 0 3px 14px rgba(59, 104, 146, 0.06);
 }
-
 .menu-title {
   font-size: 13px;
   color: #999;
-  padding: 12px 16px 8px;
+  padding: 14px 18px 8px;
   margin: 0;
   font-weight: normal;
 }
-
 .menu-section :deep(.van-cell) {
-  padding: 14px 16px;
+  padding: 16px 18px;
 }
-
 .menu-section :deep(.van-cell__left-icon) {
-  color: #ff6b35;
-  margin-right: 10px;
-  font-size: 18px;
+  color: #325d86;
+  margin-right: 12px;
+  font-size: 19px;
+}
+/* 退出登录红色区分 */
+.menu-section :deep(.logout-cell .van-cell__title) {
+  color: #ee0a24;
+}
+.menu-section :deep(.logout-cell .van-cell__left-icon) {
+  color: #ee0a24;
 }
 
-/* ---- 弹窗 ---- */
-.about-content {
-  text-align: center;
-  line-height: 1.6;
-  color: #666;
+/* 弹窗内容 */
+.about-content,
+.preference-content {
+  line-height: 1.7;
+  color: #555;
   font-size: 14px;
 }
+.preference-content :deep(.van-field) {
+  margin-bottom: 8px;
+}
 
+/* 工具类 */
 .mt-2 { margin-top: 8px; }
 .mt-4 { margin-top: 16px; }
+.mt-6 { margin-top: 24px; }
 .text-center { text-align: center; }
+.text-lg { font-size: 16px; font-weight: 500; color: #222; }
+.text-gray { color: #666; }
+.text-light-gray { color: #aaa; font-size: 13px; }
 </style>

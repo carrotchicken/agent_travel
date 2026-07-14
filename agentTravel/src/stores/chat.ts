@@ -6,7 +6,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import storage from '@/utils/storage'
-import { useAuthStore } from '@/stores/auth'
+import type { ChatMessage, ChatSession } from '@/types'
 
 const MAX_SESSIONS = 10
 const MAX_MESSAGES_PER_SESSION = 100
@@ -14,9 +14,10 @@ const MAX_MESSAGES_PER_SESSION = 100
 export const useChatStore = defineStore('chat', () => {
   // ===================== 状态 =====================
 
-  const currentSessionId = ref(null)
-  const sessions = ref([])
-  const messages = ref([])
+  const _userId = ref<number | null>(null)
+  const currentSessionId = ref<string | null>(null)
+  const sessions = ref<ChatSession[]>([])
+  const messages = ref<ChatMessage[]>([])
 
   // 初始化：游客模式
   _loadForUser()
@@ -30,21 +31,17 @@ export const useChatStore = defineStore('chat', () => {
 
   // ===================== 核心：用户感知 =====================
 
-  /** 从 authStore 实时获取当前 userId */
-  function _getUserId() {
-    try {
-      const authStore = useAuthStore()
-      return authStore.user?.id || null
-    } catch { return null }
-  }
-
-  /** 切换用户时调用：保存旧数据，重新加载新用户数据 */
-  function switchUser(_newUserId) {
+  /**
+   * 切换用户时调用：先以旧 userId 保存，再加载新用户数据。
+   * 注意：保存必须发生在 _loadForUser 之前，因为 _loadForUser 会更新 _userId。
+   */
+  function switchUser(newUserId: number | null): void {
     if (currentSessionId.value) _persistCurrentSession()
-    _loadForUser()
+    _loadForUser(newUserId)
   }
 
-  function _loadForUser() {
+  function _loadForUser(userId: number | null = null): void {
+    _userId.value = userId
     sessions.value = storage.get(_sessionsKey(), [])
     currentSessionId.value = storage.get(_currentKey(), generateId())
     messages.value = _loadCurrentMessages()
@@ -52,7 +49,7 @@ export const useChatStore = defineStore('chat', () => {
 
   // ===================== 方法 =====================
 
-  function addMessage(msg) {
+  function addMessage(msg: ChatMessage): void {
     messages.value.push(msg)
     if (messages.value.length > MAX_MESSAGES_PER_SESSION) {
       messages.value = messages.value.slice(-MAX_MESSAGES_PER_SESSION)
@@ -60,7 +57,7 @@ export const useChatStore = defineStore('chat', () => {
     _persistCurrentSession()
   }
 
-  function updateLastAIMessage(content) {
+  function updateLastAIMessage(content: string): boolean {
     const lastMsg = messages.value[messages.value.length - 1]
     if (lastMsg && lastMsg.role === 'ai') {
       lastMsg.content = content
@@ -70,7 +67,7 @@ export const useChatStore = defineStore('chat', () => {
     return false
   }
 
-  function createNewSession() {
+  function createNewSession(): string {
     const newId = generateId()
     currentSessionId.value = newId
     messages.value = []
@@ -84,7 +81,7 @@ export const useChatStore = defineStore('chat', () => {
     return newId
   }
 
-  function switchSession(sessionId) {
+  function switchSession(sessionId: string): void {
     const session = sessions.value.find(s => s.id === sessionId)
     if (session) {
       currentSessionId.value = sessionId
@@ -93,7 +90,7 @@ export const useChatStore = defineStore('chat', () => {
     }
   }
 
-  function deleteSession(sessionId) {
+  function deleteSession(sessionId: string): void {
     const idx = sessions.value.findIndex(s => s.id === sessionId)
     if (idx >= 0) {
       sessions.value.splice(idx, 1)
@@ -105,39 +102,37 @@ export const useChatStore = defineStore('chat', () => {
     }
   }
 
-  function clearAllSessions() {
+  function clearAllSessions(): void {
     sessions.value = []
     createNewSession()
   }
 
   // ===================== 私有辅助 =====================
 
-  function _sessionsKey() {
-    const uid = _getUserId()
-    return uid ? `chat_sessions_${uid}` : 'chat_sessions_guest'
+  function _sessionsKey(): string {
+    return _userId.value ? `chat_sessions_${_userId.value}` : 'chat_sessions_guest'
   }
-  function _currentKey() {
-    const uid = _getUserId()
-    return uid ? `chat_current_${uid}` : 'chat_current_guest'
+  function _currentKey(): string {
+    return _userId.value ? `chat_current_${_userId.value}` : 'chat_current_guest'
   }
-  function generateId() { return 'sess_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8) }
-  function _loadCurrentMessages() {
+  function generateId(): string { return 'sess_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8) }
+  function _loadCurrentMessages(): ChatMessage[] {
     const s = sessions.value.find(s => s.id === currentSessionId.value)
     return s ? [...s.messages] : []
   }
 
-  function _persistCurrentSession() {
+  function _persistCurrentSession(): void {
     const idx = sessions.value.findIndex(s => s.id === currentSessionId.value)
     const msgs = [...messages.value]
     const first = msgs.find(m => m.role === 'user')
     const title = first ? first.content.substring(0, 20) + (first.content.length > 20 ? '...' : '') : '新对话'
-    const data = { id: currentSessionId.value, title, messages: msgs,
+    const data: ChatSession = { id: currentSessionId.value!, title, messages: msgs,
       updatedAt: new Date().toISOString(), createdAt: sessions.value[idx]?.createdAt || new Date().toISOString() }
     if (idx >= 0) { sessions.value[idx] = data; sessions.value.splice(idx, 1); sessions.value.unshift(data) }
     else sessions.value.unshift(data)
     _persistSessions()
   }
-  function _persistSessions() { storage.set(_sessionsKey(), sessions.value) }
+  function _persistSessions(): void { storage.set(_sessionsKey(), sessions.value) }
 
   // ===================== 导出 =====================
   return {

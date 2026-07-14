@@ -55,6 +55,19 @@ export function createUser(username, hashedPassword) {
 
 /** 保存行程（如果已有同城市行程则更新） */
 export function saveTrip(userId, city, days, totalBudget, tripData, isFavorite = 0) {
+  const existing = db.prepare(
+    'SELECT id FROM trips WHERE userId = ? AND city = ? AND days = ?'
+  ).get(userId, city, days)
+
+  if (existing) {
+    db.prepare(`
+      UPDATE trips
+      SET totalBudget = ?, tripData = ?, isFavorite = ?, createdAt = CURRENT_TIMESTAMP
+      WHERE id = ? AND userId = ?
+    `).run(totalBudget, JSON.stringify(tripData), isFavorite, existing.id, userId)
+    return { id: existing.id }
+  }
+
   const stmt = db.prepare(`
     INSERT INTO trips (userId, city, days, totalBudget, tripData, isFavorite)
     VALUES (?, ?, ?, ?, ?, ?)
@@ -85,6 +98,6 @@ export function toggleTripFavorite(id, userId) {
   const trip = db.prepare('SELECT * FROM trips WHERE id = ? AND userId = ?').get(id, userId)
   if (!trip) return null
   const newFav = trip.isFavorite ? 0 : 1
-  db.prepare('UPDATE trips SET isFavorite = ? WHERE id = ?').run(newFav, id)
+  db.prepare('UPDATE trips SET isFavorite = ? WHERE id = ? AND userId = ?').run(newFav, id, userId)
   return { isFavorite: !!newFav }
 }

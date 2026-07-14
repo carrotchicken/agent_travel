@@ -10,6 +10,7 @@ import { ref, computed } from 'vue'
 import storage from '@/utils/storage'
 import { post, get, del, patch } from '@/utils/request'
 import { useAuthStore } from '@/stores/auth'
+import type { TripData } from '@/types'
 
 const MAX_HISTORY = 20
 const MAX_FAVORITES = 50
@@ -17,11 +18,11 @@ const MAX_FAVORITES = 50
 export const useTravelStore = defineStore('travel', () => {
   // ===================== 状态 =====================
 
-  const _userId = ref(null)
-  const currentTrip = ref(null)
-  const tripHistory = ref([])
-  const favorites = ref([])
-  const viewMode = ref('new')
+  const _userId = ref<number | null>(null)
+  const currentTrip = ref<TripData | null>(null)
+  const tripHistory = ref<TripData[]>([])
+  const favorites = ref<TripData[]>([])
+  const viewMode = ref<string>('new')
 
   // 初始化：游客模式
   _loadForUser(null)
@@ -34,7 +35,7 @@ export const useTravelStore = defineStore('travel', () => {
   const isCurrentFavorited = computed(() => {
     if (!currentTrip.value) return false
     return favorites.value.some(
-      f => f.city === currentTrip.value.city && f.days === currentTrip.value.days
+      f => f.city === currentTrip.value!.city && f.days === currentTrip.value!.days
     )
   })
 
@@ -42,31 +43,30 @@ export const useTravelStore = defineStore('travel', () => {
 
   /**
    * 切换当前用户，从对应 localStorage 加载/保存
-   * @param {number|null} userId
    */
-  function switchUser(userId) {
-    _saveAll()
+  function switchUser(userId: number | null): void {
+    _saveAll(_userId.value)
     _loadForUser(userId)
   }
 
-  function _loadForUser(userId) {
+  function _loadForUser(userId: number | null): void {
     _userId.value = userId
-    currentTrip.value = storage.get(_key('current_trip'), null)
-    tripHistory.value = storage.get(_key('trip_history'), [])
-    favorites.value = storage.get(_key('trip_favorites'), [])
+    currentTrip.value = storage.get(_key('current_trip', userId), null)
+    tripHistory.value = storage.get(_key('trip_history', userId), [])
+    favorites.value = storage.get(_key('trip_favorites', userId), [])
     viewMode.value = 'new'
   }
 
   // ===================== 方法 =====================
 
-  function setTrip(trip) {
+  function setTrip(trip: TripData): void {
     currentTrip.value = trip
     viewMode.value = 'new'
 
     const idx = tripHistory.value.findIndex(
       t => t.city === trip.city && t.days === trip.days
     )
-    const record = { ...trip, savedAt: new Date().toISOString() }
+    const record: TripData = { ...trip, savedAt: new Date().toISOString() }
     if (idx >= 0) {
       if (tripHistory.value[idx]._id) record._id = tripHistory.value[idx]._id
       tripHistory.value.splice(idx, 1)
@@ -80,7 +80,7 @@ export const useTravelStore = defineStore('travel', () => {
     syncTripToServer(record)
   }
 
-  async function syncTripToServer(trip) {
+  async function syncTripToServer(trip: TripData): Promise<void> {
     try {
       const authStore = useAuthStore()
       if (!authStore.isLoggedIn) return
@@ -95,33 +95,33 @@ export const useTravelStore = defineStore('travel', () => {
     } catch { /* 静默 */ }
   }
 
-  function loadFromHistory(trip) {
+  function loadFromHistory(trip: TripData): void {
     currentTrip.value = trip
     viewMode.value = 'history'
     _saveCurrent()
   }
 
-  function loadFromFavorite(trip) {
+  function loadFromFavorite(trip: TripData): void {
     currentTrip.value = trip
     viewMode.value = 'favorite'
     _saveCurrent()
   }
 
-  function removeHistory(index) {
+  function removeHistory(index: number): void {
     const trip = tripHistory.value[index]
     tripHistory.value.splice(index, 1)
     _saveHistory()
     if (trip?._id) del(`trips/${trip._id}`).catch(() => {})
   }
 
-  function clearHistory() {
-    const ids = tripHistory.value.filter(t => t._id).map(t => t._id)
+  function clearHistory(): void {
+    const ids = tripHistory.value.filter(t => t._id).map(t => t._id as number)
     tripHistory.value = []
     _saveHistory()
     ids.forEach(id => del(`trips/${id}`).catch(() => {}))
   }
 
-  function toggleFavorite(trip = currentTrip.value) {
+  function toggleFavorite(trip: TripData | null = currentTrip.value): boolean {
     if (!trip) return false
     const idx = favorites.value.findIndex(
       f => f.city === trip.city && f.days === trip.days
@@ -132,7 +132,7 @@ export const useTravelStore = defineStore('travel', () => {
       if (trip._id) patch(`trips/${trip._id}/favorite`).catch(() => {})
       return false
     } else {
-      const favRecord = { ...trip, favoritedAt: new Date().toISOString() }
+      const favRecord: TripData = { ...trip, favoritedAt: new Date().toISOString() }
       favorites.value.unshift(favRecord)
       if (favorites.value.length > MAX_FAVORITES) {
         favorites.value = favorites.value.slice(0, MAX_FAVORITES)
@@ -143,20 +143,20 @@ export const useTravelStore = defineStore('travel', () => {
     }
   }
 
-  function isFavorited(trip) {
+  function isFavorited(trip: TripData | null): boolean {
     if (!trip) return false
     return favorites.value.some(f => f.city === trip.city && f.days === trip.days)
   }
 
-  function removeFavorite(index) {
+  function removeFavorite(index: number): void {
     const fav = favorites.value[index]
     favorites.value.splice(index, 1)
     _saveFavorites()
     if (fav?._id) patch(`trips/${fav._id}/favorite`).catch(() => {})
   }
 
-  function clearFavorites() {
-    const ids = favorites.value.filter(f => f._id).map(f => f._id)
+  function clearFavorites(): void {
+    const ids = favorites.value.filter(f => f._id).map(f => f._id as number)
     favorites.value = []
     _saveFavorites()
     ids.forEach(id => patch(`trips/${id}/favorite`).catch(() => {}))
@@ -164,17 +164,17 @@ export const useTravelStore = defineStore('travel', () => {
 
   // ===================== 服务端同步 =====================
 
-  async function syncFromServer() {
+  async function syncFromServer(): Promise<void> {
     try {
       const authStore = useAuthStore()
       if (!authStore.isLoggedIn) return
       const res = await get('trips')
       if (!res?.success || !Array.isArray(res.data)) return
 
-      const historyItems = []
-      const favItems = []
+      const historyItems: TripData[] = []
+      const favItems: TripData[] = []
       for (const t of res.data) {
-        const item = { ...t.tripData, _id: t.id, savedAt: t.createdAt, favoritedAt: t.createdAt }
+        const item: TripData = { ...t.tripData, _id: t.id, savedAt: t.createdAt, favoritedAt: t.createdAt }
         historyItems.push(item)
         if (t.isFavorite) favItems.push(item)
       }
@@ -190,23 +190,15 @@ export const useTravelStore = defineStore('travel', () => {
 
   // ===================== 私有辅助 =====================
 
-  /** 实时从 authStore 获取 userId，避免 _userId ref 的异步时序问题 */
-  function _currentUserId() {
-    try {
-      const authStore = useAuthStore()
-      return authStore.user?.id || null
-    } catch { return null }
-  }
-
-  function _key(name) {
-    const uid = _currentUserId()
+  function _key(name: string, userId: number | null = null): string {
+    const uid = userId ?? _userId.value
     return uid ? `${name}_${uid}` : `${name}_guest`
   }
 
-  function _saveHistory() { storage.set(_key('trip_history'), tripHistory.value) }
-  function _saveFavorites() { storage.set(_key('trip_favorites'), favorites.value) }
-  function _saveCurrent() { storage.set(_key('current_trip'), currentTrip.value) }
-  function _saveAll() { _saveHistory(); _saveFavorites(); _saveCurrent() }
+  function _saveHistory(userId: number | null = null): void { storage.set(_key('trip_history', userId), tripHistory.value) }
+  function _saveFavorites(userId: number | null = null): void { storage.set(_key('trip_favorites', userId), favorites.value) }
+  function _saveCurrent(userId: number | null = null): void { storage.set(_key('current_trip', userId), currentTrip.value) }
+  function _saveAll(userId: number | null = null): void { _saveHistory(userId); _saveFavorites(userId); _saveCurrent(userId) }
 
   // ===================== 导出 =====================
   return {

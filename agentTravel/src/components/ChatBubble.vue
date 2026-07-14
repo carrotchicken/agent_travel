@@ -1,84 +1,51 @@
 <!--
   ChatBubble — 聊天气泡组件
-  职责：根据消息角色（user/ai）渲染不同样式的气泡
-  使用场景：Chat/index.vue 中 v-for 循环渲染每条消息
+  AI 消息支持 Markdown 渲染（列表、加粗、代码块等）
 -->
 <template>
-  <!--
-    外层容器：通过 :class 动态绑定 messageClass 计算属性
-    messageClass 返回 'user-message' 或 'ai-message'
-    CSS 用这个类名控制气泡是靠左还是靠右、什么颜色
-  -->
   <div class="chat-bubble" :class="messageClass">
-    <!-- 气泡内容区 -->
     <div class="bubble-content">
-      <!-- 用户消息：直接展示文字 -->
+      <!-- 用户消息：纯文本 -->
       <div class="message-text" v-if="message.role === 'user'">{{ message.content }}</div>
-      <!-- AI 消息：用 template 包裹，支持空内容时也不报错（流式刚开始时 content 为空字符串） -->
-      <div class="message-text ai-message" v-else>
-        <template v-if="message.content">{{ message.content }}</template>
-      </div>
+      <!-- AI 消息：Markdown 渲染 -->
+      <div
+        v-else
+        class="message-text ai-message markdown-body"
+        v-html="renderedContent"
+      />
     </div>
-    <!--
-      时间显示：只在有内容且有时间戳时展示
-      流式生成过程中 content 不为空，显示实时时间
-    -->
     <div class="message-time" v-if="showTime">{{ formatTime }}</div>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import { renderMarkdown } from '@/utils/markdown'
 
-// ============================================================
-// Props 定义
-// ============================================================
-
-// 接收父组件传来的消息对象
-// 格式：{ id: 时间戳, role: 'user'|'ai', content: 文本, timestamp: ISO时间字符串 }
 const props = defineProps({
   message: {
     type: Object,
-    required: true   // 必传，否则组件没有渲染意义
+    required: true
   }
 })
 
-// ============================================================
-// 计算属性
-// ============================================================
-
-/**
- * 根据消息角色返回对应的 CSS 类名
- * 'user' → 靠右对齐 + 蓝色背景（像微信自己的消息）
- * 'ai'   → 靠左对齐 + 灰色背景（像对方的消息）
- * 
- * 为什么用计算属性？
- * - props.message 变化时自动重新计算
- * - 模板里写表达式太复杂，抽出来清晰
- */
 const messageClass = computed(() => {
   return props.message.role === 'user' ? 'user-message' : 'ai-message'
 })
 
-/**
- * 控制是否显示时间戳
- * 条件：消息有时间戳 且 内容不为空
- * 流式刚开始时 content 为空，不显示时间，等有内容了再显示
- */
 const showTime = computed(() => {
   return props.message.timestamp && props.message.content
 })
 
-/**
- * 格式化时间戳为 HH:MM
- * 例如 "2024-06-15T14:30:00.000Z" → "14:30"
- * 
- * padStart(2, '0') 确保个位数前面补零，如 9:05 显示为 "09:05"
- */
 const formatTime = computed(() => {
   if (!props.message.timestamp) return ''
   const date = new Date(props.message.timestamp)
   return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+})
+
+const renderedContent = computed(() => {
+  if (!props.message.content) return ''
+  return renderMarkdown(props.message.content)
 })
 </script>
 
@@ -89,19 +56,16 @@ const formatTime = computed(() => {
   max-width: 80%;
 }
 
-/* 用户消息：靠右 */
 .user-message {
   align-self: flex-end;
   align-items: flex-end;
 }
 
-/* AI 消息：靠左 */
 .ai-message {
   align-self: flex-start;
   align-items: flex-start;
 }
 
-/* 气泡内容通用样式 */
 .bubble-content {
   padding: 12px 16px;
   border-radius: 16px;
@@ -110,27 +74,85 @@ const formatTime = computed(() => {
   word-break: break-word;
 }
 
-/* 用户气泡：橙黄渐变 */
 .user-message .bubble-content {
-  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  background: linear-gradient(135deg, #3b6892 0%, #5a8ab8 100%);
   color: #fff;
   border-bottom-right-radius: 4px;
-  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.2);
+  box-shadow: 0 2px 8px rgba(59, 104, 146, 0.2);
 }
 
-/* AI 气泡：白色卡片 */
 .ai-message .bubble-content {
   background: #fff;
-  color: #333;
+  color: #3c3c3c;
   border-bottom-left-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
-/* 时间文字 */
 .message-time {
   font-size: 11px;
   color: #bbb;
   margin-top: 4px;
   padding: 0 4px;
+}
+
+/* Markdown 样式 */
+.markdown-body :deep(p) {
+  margin: 0 0 8px;
+}
+
+.markdown-body :deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+.markdown-body :deep(ul),
+.markdown-body :deep(ol) {
+  margin: 4px 0 8px;
+  padding-left: 20px;
+}
+
+.markdown-body :deep(li) {
+  margin-bottom: 4px;
+}
+
+.markdown-body :deep(strong) {
+  font-weight: 600;
+  color: #2c2c2c;
+}
+
+.markdown-body :deep(code) {
+  background: #f0f5fa;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #3b6892;
+}
+
+.markdown-body :deep(pre) {
+  background: #f7f5ee;
+  padding: 10px 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+.markdown-body :deep(pre code) {
+  background: none;
+  padding: 0;
+}
+
+.markdown-body :deep(h1),
+.markdown-body :deep(h2),
+.markdown-body :deep(h3) {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 8px 0 4px;
+  color: #2c2c2c;
+}
+
+.markdown-body :deep(blockquote) {
+  border-left: 3px solid #c5d6e6;
+  margin: 8px 0;
+  padding-left: 12px;
+  color: #666;
 }
 </style>

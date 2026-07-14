@@ -4,9 +4,9 @@ import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
   plugins: [vue()],
-  resolve:{
-    alias:{
-      '@':fileURLToPath(new URL('./src',import.meta.url))
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
   server: {
@@ -16,5 +16,9 @@ export default defineConfig({
         changeOrigin: true
       }
     }
+  },
+  test: {
+    environment: 'happy-dom',
+    include: ['src/**/*.test.ts']
   }
 })

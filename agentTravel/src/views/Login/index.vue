@@ -98,7 +98,7 @@ const goRegister = () => {
 
 <style scoped>
 .page-container {
-  background: #fff8f5;
+  background: #f5f1e8;
   min-height: 100vh;
 }
 
@@ -115,7 +115,7 @@ const goRegister = () => {
 
 .auth-title {
   font-size: 22px;
-  color: #1a1a1a;
+  color: #2c2c2c;
   margin-bottom: 8px;
   font-weight: 700;
 }
@@ -132,7 +132,7 @@ const goRegister = () => {
   border-radius: 16px;
   overflow: hidden;
   padding: 8px 0;
-  box-shadow: 0 4px 20px rgba(255, 107, 53, 0.08);
+  box-shadow: 0 4px 20px rgba(59, 104, 146, 0.06);
 }
 
 .auth-form :deep(.van-field) {
@@ -148,7 +148,7 @@ const goRegister = () => {
 .auth-form :deep(.van-cell::after) {
   left: 16px;
   right: 16px;
-  border-color: #f5f5f5;
+  border-color: #f5f2eb;
 }
 
 .login-btn {
@@ -166,7 +166,7 @@ const goRegister = () => {
 }
 
 .link {
-  color: #ff6b35;
+  color: #3b6892;
   cursor: pointer;
   font-weight: 500;
 }

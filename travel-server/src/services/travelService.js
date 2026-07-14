@@ -1,6 +1,9 @@
 import { ChatOpenAI } from "@langchain/openai"
-import { HumanMessage, SystemMessage } from '@langchain/core/messages'
+import { HumanMessage, SystemMessage, AIMessage } from '@langchain/core/messages'
 import 'dotenv/config'
+
+/** 多轮对话保留的最大消息条数（user + ai 合计） */
+const MAX_CHAT_HISTORY = 10
 
 /**
  * 旅游 AI 服务类
@@ -41,17 +44,58 @@ class TravelService {
   }
 
   /**
-   * 生成完整旅游行程
-   * @param {string} city - 目的地城市
-   * @param {number} budget - 总预算（元）
-   * @param {number} days - 旅行天数
-   * @returns {Promise<Object>} 行程数据对象
+   * 校验行程推荐参数
    */
-  async recommend(city, budget, days) {
+  validateRecommendParams(city, budget, days) {
     if (budget < 100 || days < 1 || days > 30) {
       throw new Error('预算不能低于100元，出行天数只能在1~30天之间')
     }
+    if (!city || !String(city).trim()) {
+      throw new Error('目的地城市不能为空')
+    }
+  }
 
+  /**
+   * 从 AI 原始文本中解析行程 JSON
+   * @param {string} fullResponse
+   * @returns {Object}
+   */
+  parseTripResponse(fullResponse) {
+    try {
+      const jsonMatch = fullResponse.match(/```json\n([\s\S]*?)\n```/) ||
+        fullResponse.match(/```\n([\s\S]*?)\n```/) ||
+        fullResponse.match(/\{[\s\S]*\}/)
+
+      if (!jsonMatch) {
+        return {
+          success: false,
+          error: 'AI返回的内容里没有找到可解析的行程数据',
+          rawResponse: fullResponse.substring(0, 200)
+        }
+      }
+
+      let jsonString = jsonMatch[1] || jsonMatch[0]
+      if (!jsonMatch[1]) {
+        const lastBrace = jsonString.lastIndexOf('}')
+        if (lastBrace > 0) {
+          jsonString = jsonString.substring(0, lastBrace + 1)
+        }
+      }
+      return JSON.parse(jsonString)
+    } catch (error) {
+      return {
+        success: false,
+        error: '解析AI行程数据失败，格式错乱',
+        rawResponse: error.message
+      }
+    }
+  }
+
+  /**
+   * 生成完整旅游行程（非流式，保留兼容）
+   */
+  async recommend(city, budget, days) {
+    this.validateRecommendParams(city, budget, days)
     const message = this.getTravelPrompt(city, budget, days)
 
     try {
@@ -60,42 +104,42 @@ class TravelService {
         ? response.content
         : JSON.stringify(response.content) || ''
 
-      console.log('===== AI 原始返回 =====')
-      console.log(fullResponse)
-      console.log('======================')
+      return this.parseTripResponse(fullResponse)
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      }
+    }
+  }
 
-      try {
-        // 三层正则 fallback：标准 json 代码块 → 无标注代码块 → 裸 JSON（括号平衡匹配）
-        const jsonMatch = fullResponse.match(/```json\n([\s\S]*?)\n```/) ||
-          fullResponse.match(/```\n([\s\S]*?)\n```/) ||
-          fullResponse.match(/\{[\s\S]*\}/)
+  /**
+   * 流式生成旅游行程
+   * @param {string} city
+   * @param {number} budget
+   * @param {number} days
+   * @param {(chunk: string) => void} streamCallback
+   * @returns {Promise<Object>}
+   */
+  async recommendStream(city, budget, days, streamCallback) {
+    this.validateRecommendParams(city, budget, days)
+    const prompt = this.getTravelPrompt(city, budget, days)
 
-        if (!jsonMatch) {
-          return {
-            success: false,
-            error: 'AI返回的内容里没有找到可解析的行程数据',
-            rawResponse: fullResponse.substring(0, 200)
-          }
-        }
+    try {
+      const stream = await this.llm.stream([new HumanMessage(prompt)])
+      let fullResponse = ''
 
-        let jsonString = jsonMatch[1] || jsonMatch[0]
-        // 如果裸 JSON 匹配过长（AI 在 JSON 后附加了其他内容），尝试截断到最后一个合法的 }
-        if (!jsonMatch[1]) {
-          const lastBrace = jsonString.lastIndexOf('}')
-          if (lastBrace > 0) {
-            jsonString = jsonString.substring(0, lastBrace + 1)
-          }
-        }
-        const resData = JSON.parse(jsonString)
-        return resData
+      for await (const chunk of stream) {
+        const content = typeof chunk.content === 'string' ? chunk.content : ''
+        if (!content) continue
 
-      } catch (error) {
-        return {
-          success: false,
-          error: '解析AI行程数据失败，格式错乱',
-          rawResponse: error.message
+        fullResponse += content
+        if (streamCallback) {
+          streamCallback(content)
         }
       }
+
+      return this.parseTripResponse(fullResponse)
     } catch (error) {
       return {
         success: false,
@@ -170,16 +214,45 @@ class TravelService {
   }
 
   /**
-   * 流式聊天接口
+   * 构建多轮对话消息列表
+   * @param {string} message - 当前用户消息
+   * @param {Array<{role: string, content: string}>} history - 历史消息
+   * @returns {Array}
+   */
+  buildChatMessages(message, history = []) {
+    const messages = [
+      new SystemMessage('你是友好的旅游问答助手，只用中文回答用户旅游相关问题')
+    ]
+
+    const recent = Array.isArray(history) ? history.slice(-MAX_CHAT_HISTORY) : []
+    for (const item of recent) {
+      if (!item?.content?.trim()) continue
+      if (item.role === 'user') {
+        messages.push(new HumanMessage(item.content))
+      } else if (item.role === 'ai') {
+        messages.push(new AIMessage(item.content))
+      }
+    }
+
+    if (message?.trim()) {
+      const last = recent[recent.length - 1]
+      if (!last || last.role !== 'user' || last.content !== message) {
+        messages.push(new HumanMessage(message))
+      }
+    }
+
+    return messages
+  }
+
+  /**
+   * 流式聊天接口（支持多轮上下文）
    * @param {string} message - 用户消息
    * @param {(chunk: string) => void} streamCallback - 流式回调
+   * @param {Array<{role: string, content: string}>} history - 历史消息
    * @returns {Promise<{success: boolean, reply?: string, error?: string}>}
    */
-  async chat(message, streamCallback) {
-    const messages = [
-      new SystemMessage('你是友好的旅游问答助手，只用中文回答用户旅游相关问题'),
-      new HumanMessage(message)
-    ]
+  async chat(message, streamCallback, history = []) {
+    const messages = this.buildChatMessages(message, history)
 
     try {
       const stream = await this.llm.stream(messages)

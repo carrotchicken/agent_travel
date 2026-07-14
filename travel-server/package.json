@@ -1,5 +1,5 @@
 {
-  "name": "travle-server",
+  "name": "travel-server",
   "version": "1.0.0",
   "description": "智能景点介绍服务端基于node.js+express+LangChain",
   "license": "ISC",

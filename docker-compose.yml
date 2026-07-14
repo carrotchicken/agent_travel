@@ -6,15 +6,15 @@ version: '3.8'
 
 services:
   server:
-    build: ./travle-server
+    build: ./travel-server
     container_name: travel-server
     ports:
       - "3300:3300"
     env_file:
-      - ./travle-server/.env
+      - ./travel-server/.env
     restart: unless-stopped
     volumes:
-      - ./travle-server/data:/app/data
+      - ./travel-server/data:/app/data
 
   client:
     build: ./agentTravel

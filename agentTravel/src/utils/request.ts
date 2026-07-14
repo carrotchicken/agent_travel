@@ -1,30 +1,88 @@
 // ============================================================
 // HTTP 请求工具（TypeScript）
-// 包含 Axios 封装 + SSE 流式请求
+// 包含 Axios 封装 + SSE 流式请求 + 统一错误处理
 // ============================================================
-import axios from 'axios'
+import axios, { type AxiosError } from 'axios'
+
+// ============================================================
+// 错误处理工具
+// ============================================================
+
+const HTTP_ERROR_MAP: Record<number, string> = {
+  400: '请求参数有误',
+  401: '登录已过期，请重新登录',
+  403: '没有访问权限',
+  404: '请求的资源不存在',
+  429: '请求过于频繁，请稍后再试（每分钟最多 5 次）',
+  500: '服务器内部错误，请稍后重试',
+  502: 'AI 服务暂时不可用，请稍后重试'
+}
+
+/** 401 时清除登录态并跳转登录页 */
+function handleUnauthorized() {
+  localStorage.removeItem('auth_token')
+  localStorage.removeItem('auth_user')
+  const path = window.location.pathname
+  if (!path.includes('/login') && !path.includes('/register')) {
+    const redirect = encodeURIComponent(path + window.location.search)
+    window.location.href = `/login?redirect=${redirect}`
+  }
+}
+
+/** 从各类错误对象中提取用户可读的错误信息 */
+export function getErrorMessage(err: unknown): string {
+  if (!err) return '未知错误'
+  if (typeof err === 'string') return err
+
+  if (!navigator.onLine) {
+    return '网络已断开，请检查网络连接'
+  }
+
+  if (err instanceof Error) {
+    return err.message || '请求失败，请稍后重试'
+  }
+
+  const e = err as Record<string, unknown>
+  const status = e.status as number | undefined
+
+  if (status && HTTP_ERROR_MAP[status]) {
+    return HTTP_ERROR_MAP[status]
+  }
+
+  return (e.error as string) || (e.message as string) || '请求失败，请稍后重试'
+}
+
+function handleAxiosError(error: AxiosError) {
+  const status = error.response?.status
+  const data = error.response?.data as Record<string, unknown> | undefined
+
+  if (status === 401) {
+    handleUnauthorized()
+  }
+
+  const message = (data?.error as string) ||
+    (data?.message as string) ||
+    (status && HTTP_ERROR_MAP[status]) ||
+    error.message ||
+    '请求失败，请稍后重试'
+
+  return Promise.reject({ message, status, ...data })
+}
 
 // ============================================================
 // 创建 Axios 实例
 // ============================================================
 
 const request = axios.create({
-  // 基础 URL：开发环境通过 Vite proxy 转发到后端，生产环境需配置 nginx
   baseURL: '/api/travel',
-  // 超时时间：60 秒（AI 生成需要时间）
   timeout: 60000,
   headers: {
     'Content-Type': 'application/json'
   }
 })
 
-// ============================================================
-// 请求拦截器
-// ============================================================
-
 request.interceptors.request.use(
   config => {
-    // 自动从 localStorage 读取 token 并添加到请求头
     const token = localStorage.getItem('auth_token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
@@ -34,48 +92,33 @@ request.interceptors.request.use(
   error => Promise.reject(error)
 )
 
-// ============================================================
-// 响应拦截器
-// ============================================================
-
-// 直接返回 response.data，调用方不用再取 .data
-// 注意：4xx/5xx 状态码也会进入这里，因为我们在 error 处理中也返回了数据
 request.interceptors.response.use(
   response => response.data,
-  error => {
-    if (error.response && error.response.data) {
-      return Promise.reject(error.response.data)
-    }
-    return Promise.reject(error)
-  }
+  error => handleAxiosError(error)
 )
 
 // ============================================================
 // 导出 HTTP 方法
 // ============================================================
 
-/** POST 请求 */
 export function post(url: string, data?: unknown): Promise<any> {
   return request.post(url, data)
 }
 
-/** GET 请求 */
 export function get(url: string, params?: unknown): Promise<any> {
   return request.get(url, { params })
 }
 
-/** DELETE 请求 */
 export function del(url: string): Promise<any> {
   return request.delete(url)
 }
 
-/** PATCH 请求 */
 export function patch(url: string, data?: unknown): Promise<any> {
   return request.patch(url, data)
 }
 
 // ============================================================
-// Auth 专用请求实例（baseURL = /api/auth，带 Token 拦截器）
+// Auth 专用请求实例
 // ============================================================
 
 const authRequest = axios.create({
@@ -97,12 +140,7 @@ authRequest.interceptors.request.use(
 
 authRequest.interceptors.response.use(
   response => response.data,
-  error => {
-    if (error.response && error.response.data) {
-      return Promise.reject(error.response.data)
-    }
-    return Promise.reject(error)
-  }
+  error => handleAxiosError(error)
 )
 
 export function authPost(url: string, data?: unknown): Promise<any> {
@@ -114,120 +152,146 @@ export function authGet(url: string, params?: unknown): Promise<any> {
 }
 
 // ============================================================
-// 类型定义
+// SSE 流式请求
 // ============================================================
 
-/** SSE 流式请求的回调函数类型 */
 type ChunkCallback = (chunk: string) => void
 type CompleteCallback = (data?: any) => void
 type ErrorCallback = (error: string) => void
 
-// ============================================================
-// SSE 流式请求（核心功能）
-// ============================================================
+export interface StreamHandle {
+  abort: () => void
+}
 
 /**
- * 流式请求 - 用于 AI 对话
- *
- * 为什么用原生 fetch 而不是 Axios？
- * - Axios 不支持读取流式响应（response.body.getReader）
- * - fetch 原生支持 ReadableStream
- *
- * SSE 数据格式：
- *   data: {"type":"chunk","content":"北京"}  → 调用 onChunk
- *   event: end                                → 调用 onComplete
- *   data: {"done":true}                       → 调用 onComplete
- *
- * @param url     - 接口路径（会自动拼接 /api/travel/）
- * @param data    - 请求体数据
- * @param onChunk - 收到数据块时调用
- * @param onComplete - 全部接收完毕时调用
- * @param onError - 发生错误时调用
+ * 解析 SSE 响应体中的错误信息（非 200 时响应可能是 JSON）
  */
-export async function fetchStream(
+async function parseStreamHttpError(response: Response): Promise<string> {
+  const fallback = HTTP_ERROR_MAP[response.status] || `请求失败: HTTP ${response.status}`
+
+  try {
+    const body = await response.json()
+    return (body.error as string) || (body.message as string) || fallback
+  } catch {
+    return fallback
+  }
+}
+
+/**
+ * 流式请求 - 用于 AI 对话 / 行程生成
+ * 返回 abort 句柄，调用方可在组件卸载时取消请求
+ */
+export function fetchStream(
   url: string,
   data: unknown,
   onChunk: ChunkCallback,
   onComplete: CompleteCallback,
   onError: ErrorCallback
-): Promise<void> {
+): StreamHandle {
   const controller = new AbortController()
+  let completed = false
 
-  try {
-    // 构建请求头：携带 JWT Token（与 Axios 拦截器保持一致）
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-    const token = localStorage.getItem('auth_token')
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`
-    }
+  const finish = (fn: () => void) => {
+    if (completed) return
+    completed = true
+    fn()
+  }
 
-    const response = await fetch(`/api/travel/${url}`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(data),
-      signal: controller.signal
-    })
-
-    if (!response.ok || !response.body) {
-      onError(`请求失败: HTTP ${response.status}`)
-      return
-    }
-
-    const reader = response.body.getReader()
-    const decoder = new TextDecoder()
-    let buffer = ''
-
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) {
-        onComplete()
-        break
+  ;(async () => {
+    try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      const token = localStorage.getItem('auth_token')
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
       }
 
-      const chunk = decoder.decode(value, { stream: true })
-      buffer += chunk
-      const lines = buffer.split('\n')
-      // 最后一行可能不完整，暂存到下一次循环拼接
-      buffer = lines.pop() || ''
+      const response = await fetch(`/api/travel/${url}`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(data),
+        signal: controller.signal
+      })
 
-      for (const line of lines) {
-        const trimmedLine = line.trim()
-        if (!trimmedLine) continue
+      if (!response.ok) {
+        if (response.status === 401) handleUnauthorized()
+        const errMsg = await parseStreamHttpError(response)
+        finish(() => onError(errMsg))
+        return
+      }
 
-        try {
-          // event: 开头 → 结束事件
-          if (trimmedLine.startsWith('event:')) {
-            const eventType = trimmedLine.substring(6).trim()
-            if (eventType === 'end') onComplete()
-            continue
-          }
+      if (!response.body) {
+        finish(() => onError('服务器未返回流式数据'))
+        return
+      }
 
-          // data: 开头 → 数据块
-          if (trimmedLine.startsWith('data:')) {
-            const jsonStr = trimmedLine.substring(5).trim()
-            if (!jsonStr) continue
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
 
-            const jsonData = JSON.parse(jsonStr)
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
 
-            if (jsonData.type === 'chunk') {
-              onChunk(jsonData.content)
-            } else if (jsonData.error) {
-              onError(jsonData.error)
-            } else if (jsonData.type === 'complete') {
-              onComplete(jsonData.data)
-            } else if (jsonData.done) {
-              onComplete(jsonData.data)
+        const chunk = decoder.decode(value, { stream: true })
+        buffer += chunk
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
+
+        for (const line of lines) {
+          const trimmedLine = line.trim()
+          if (!trimmedLine) continue
+
+          try {
+            if (trimmedLine.startsWith('event:')) {
+              const eventType = trimmedLine.substring(6).trim()
+              if (eventType === 'end') {
+                finish(() => onComplete())
+                return
+              }
+              continue
             }
+
+            if (trimmedLine.startsWith('data:')) {
+              const jsonStr = trimmedLine.substring(5).trim()
+              if (!jsonStr) continue
+
+              const jsonData = JSON.parse(jsonStr)
+
+              if (jsonData.type === 'chunk') {
+                onChunk(jsonData.content)
+              } else if (jsonData.type === 'error') {
+                finish(() => onError(jsonData.error || '未知错误'))
+                return
+              } else if (jsonData.error) {
+                finish(() => onError(jsonData.error))
+                return
+              } else if (jsonData.type === 'complete') {
+                finish(() => onComplete(jsonData.data ?? jsonData.content))
+                return
+              } else if (jsonData.done) {
+                finish(() => onComplete(jsonData.data))
+                return
+              }
+            }
+          } catch {
+            console.error('SSE 数据解析异常:', trimmedLine)
           }
-        } catch {
-          console.error('SSE 数据解析异常:', trimmedLine)
         }
       }
+
+      finish(() => onComplete())
+    } catch (err: any) {
+      if (err.name === 'AbortError') return
+      console.error('fetchStream 错误:', err)
+      if (!navigator.onLine) {
+        finish(() => onError('网络已断开，请检查网络连接'))
+      } else {
+        finish(() => onError(err.message || '网络请求失败'))
+      }
     }
-  } catch (err: any) {
-    console.error('fetchStream 错误:', err)
-    if (err.name !== 'AbortError') {
-      onError(err.message || '网络请求失败')
-    }
+  })()
+
+  return {
+    abort: () => controller.abort()
   }
 }

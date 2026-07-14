@@ -7,6 +7,7 @@ build/
 .env.*.local
 .DS_Store
 Thumbs.db
+.reasonix/
 
 # ============= 前端忽略 =============
 agentTravel/node_modules/
@@ -14,5 +15,8 @@ agentTravel/dist/
 agentTravel/.env
 
 # ============= 后端忽略 =============
-travle-server/node_modules/
-travle-server/.env
+travel-server/node_modules/
+travel-server/.env
+travel-server/data/
+travel-server/prisma/data/
+*.db
