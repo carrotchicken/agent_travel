@@ -4,8 +4,8 @@
 // ============================================================
 import axios, { type AxiosError } from 'axios'
 
-// 读取生产环境后端域名，本地开发为空走vite代理
-const API_HOST = import.meta.env.VITE_API_HOST || ''
+// 硬编码线上后端域名，解决静态托管不读取.env.production导致接口404
+const API_HOST = 'https://travelserver-281839-8-1429643134.sh.run.tcloudbase.com'
 
 // ============================================================
 // 错误处理工具
@@ -208,7 +208,6 @@ export function fetchStream(
         headers['Authorization'] = `Bearer ${token}`
       }
 
-      // 第三处修改：拼接完整后端域名
       const response = await fetch(`${API_HOST}/api/travel/${url}`, {
         method: 'POST',
         headers,
