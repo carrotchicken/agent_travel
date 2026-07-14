@@ -4,8 +4,7 @@
 // ============================================================
 import axios, { type AxiosError } from 'axios'
 
-// 硬编码线上后端域名，解决静态托管不读取.env.production导致接口404
-const API_HOST = 'https://travelserver-281839-8-1429643134.sh.run.tcloudbase.com'
+const API_HOST = import.meta.env.VITE_API_HOST || 'http://127.0.0.1:3300'
 
 // ============================================================
 // 错误处理工具
