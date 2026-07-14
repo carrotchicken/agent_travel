@@ -4,6 +4,9 @@
 // ============================================================
 import axios, { type AxiosError } from 'axios'
 
+// 读取生产环境后端域名，本地开发为空走vite代理
+const API_HOST = import.meta.env.VITE_API_HOST || ''
+
 // ============================================================
 // 错误处理工具
 // ============================================================
@@ -74,7 +77,7 @@ function handleAxiosError(error: AxiosError) {
 // ============================================================
 
 const request = axios.create({
-  baseURL: '/api/travel',
+  baseURL: `${API_HOST}/api/travel`,
   timeout: 60000,
   headers: {
     'Content-Type': 'application/json'
@@ -122,7 +125,7 @@ export function patch(url: string, data?: unknown): Promise<any> {
 // ============================================================
 
 const authRequest = axios.create({
-  baseURL: '/api/auth',
+  baseURL: `${API_HOST}/api/auth`,
   timeout: 10000,
   headers: { 'Content-Type': 'application/json' }
 })
@@ -205,7 +208,8 @@ export function fetchStream(
         headers['Authorization'] = `Bearer ${token}`
       }
 
-      const response = await fetch(`/api/travel/${url}`, {
+      // 第三处修改：拼接完整后端域名
+      const response = await fetch(`${API_HOST}/api/travel/${url}`, {
         method: 'POST',
         headers,
         body: JSON.stringify(data),
