@@ -2,7 +2,7 @@
 # 后端 Dockerfile
 # 运行：docker build -t travel-server . && docker run -p 3300:3300 --env-file .env travel-server
 # ============================================================
-FROM node:20-alpine
+FROM node:20
 
 WORKDIR /app
 
