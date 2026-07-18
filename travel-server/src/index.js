@@ -21,10 +21,25 @@ const port = process.env.PORT || 3300
 // 注册中间件（按顺序执行）
 // ============================================================
 
-// 1. CORS 跨域：仅允许前端域名访问后端 API
+// 1. CORS 跨域：允许前端域名 + 本地开发环境访问后端 API
 //    必须放在最前面，否则跨域请求会被拦截
+const allowedOrigins = [
+  process.env.CORS_ORIGIN,
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174'
+].filter(Boolean)
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5174',
+  origin: (origin, callback) => {
+    // 允许无 origin 的请求（如 Postman、curl）
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
   credentials: true
 }))
 

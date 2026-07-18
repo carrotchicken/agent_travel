@@ -410,7 +410,8 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #3b6892, #8c8732);
+  background: #82bcc8;
+  border-radius: 3px;
 }
 
 .trip-header {
@@ -430,18 +431,19 @@ onUnmounted(() => {
 
 .trip-header h2 {
   font-size: 20px;
-  color: #2c2c2c;
+  color: #4a4a5a;
   margin: 0;
   font-weight: 700;
 }
 
 .mode-tag {
-  background: #e8f0f8 !important;
-  color: #3b6892 !important;
+  background: #eaf5f7 !important;
+  color: #5d9aa8 !important;
   border: none !important;
-  border-radius: 10px !important;
-  padding: 0 8px !important;
+  border-radius: 12px !important;
+  padding: 2px 10px !important;
   font-size: 12px !important;
+  font-weight: 500;
 }
 
 .trip-budget {
@@ -450,7 +452,7 @@ onUnmounted(() => {
 
 .budget-num {
   font-size: 22px;
-  color: #3b6892;
+  color: #82bcc8;
   font-weight: 700;
   display: block;
   line-height: 1.2;
@@ -476,22 +478,24 @@ onUnmounted(() => {
 }
 
 .export-btn {
-  color: #3b6892 !important;
-  border-color: #c5d6e6 !important;
-  background: #f0f5fa !important;
+  color: #82bcc8 !important;
+  border-color: #c8e0e8 !important;
+  background: #eaf5f7 !important;
 }
 
-/* ---- 每日行程 ---- */
+/* ---- 黏土折叠面板 ---- */
 .day-collapse {
   margin-bottom: 16px;
-  border-radius: 16px;
+  border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 2px 12px rgba(59, 104, 146, 0.06);
+  box-shadow:
+    0 6px 24px rgba(0, 0, 0, 0.04),
+    0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
 .day-collapse :deep(.van-collapse-item__title) {
   font-weight: 600;
-  color: #2c2c2c;
+  color: #4a4a5a;
   padding: 14px 16px;
 }
 
@@ -523,16 +527,19 @@ onUnmounted(() => {
 .section-label.morning {
   background: #f0ece0;
   color: #8c8732;
+  border-radius: 14px;
 }
 
 .section-label.afternoon {
-  background: #e8f0f8;
-  color: #3b6892;
+  background: #eaf5f7;
+  color: #5d9aa8;
+  border-radius: 14px;
 }
 
 .section-label.evening {
-  background: #ece8f0;
+  background: #ede8f0;
   color: #6b5c8c;
+  border-radius: 14px;
 }
 
 /* ---- 预算/提示卡片 ---- */
@@ -587,9 +594,12 @@ onUnmounted(() => {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
   background: #fff;
-  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 -6px 20px rgba(0, 0, 0, 0.04),
+    0 -2px 6px rgba(0, 0, 0, 0.02);
+  border-radius: 20px 20px 0 0;
   max-width: 750px;
   margin: 0 auto;
   z-index: 100;
@@ -630,7 +640,7 @@ onUnmounted(() => {
 
 .loading-stage {
   font-size: 14px;
-  color: #3b6892;
+  color: #82bcc8;
   margin: 0 0 20px;
 }
 

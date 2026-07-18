@@ -1,72 +1,74 @@
 /* ============================================================
-   全局公共样式 · 敦煌风主题
+   全局公共样式 · Claymorphism 黏土风格主题
+   设计核心：蓬松感 + 悬浮感 + 马卡龙配色
+   Vant 4 组件完全保留，仅覆盖 CSS 变量和辅助 class
    ============================================================ */
 
 /* ---- Vant 主题变量覆盖 ---- */
 :root {
-  /* 主色：海海蓝 - 敦煌深青蓝 */
-  --van-primary-color: #3b6892;
-  --van-primary-color-light: #e8f0f8;
-  --van-primary-color-dark: #2d5275;
+  /* 主色：马卡龙柔和青蓝（天空/旅行感） */
+  --van-primary-color: #82bcc8;
+  --van-primary-color-light: #eaf5f7;
+  --van-primary-color-dark: #5d9aa8;
 
-  /* 功能色 */
-  --van-success-color: #5a8a5c;
-  --van-warning-color: #c9a962;
-  --van-danger-color: #b85450;
-  --van-text-color: #2c2c2c;
-  --van-text-color-2: #5c5c5c;
-  --van-text-color-3: #999999;
+  /* 功能色：柔和粉彩 */
+  --van-success-color: #8cc89e;
+  --van-warning-color: #e8c880;
+  --van-danger-color: #e89890;
+  --van-text-color: #4a4a5a;
+  --van-text-color-2: #6e6e7e;
+  --van-text-color-3: #a0a0b0;
 
-  /* 圆角 - 偏圆润，有壁画感 */
-  --van-radius-lg: 16px;
-  --van-radius-md: 10px;
-  --van-radius-sm: 6px;
+  /* 圆角 - 黏土风超大圆角，模拟手工捏制弧度 */
+  --van-radius-lg: 24px;
+  --van-radius-md: 16px;
+  --van-radius-sm: 10px;
 
   /* 字体 */
   --van-font-size-md: 14px;
   --van-font-size-lg: 16px;
 
-  /* 导航栏 */
-  --van-nav-bar-height: 46px;
-  --van-nav-bar-background: linear-gradient(135deg, #3b6892 0%, #5a8ab8 100%);
+  /* 导航栏 - 柔和粉彩纯色 */
+  --van-nav-bar-height: 48px;
+  --van-nav-bar-background: #82bcc8;
   --van-nav-bar-title-text-color: #ffffff;
   --van-nav-bar-icon-color: #ffffff;
   --van-nav-bar-arrow-size: 18px;
 
-  /* Tabbar */
-  --van-tabbar-height: 50px;
+  /* Tabbar - 黏土悬浮 */
+  --van-tabbar-height: 54px;
   --van-tabbar-background: #ffffff;
-  --van-tabbar-item-active-color: #3b6892;
-  --van-tabbar-item-text-color: #969799;
+  --van-tabbar-item-active-color: #82bcc8;
+  --van-tabbar-item-text-color: #b0b0c0;
   --van-tabbar-item-font-size: 10px;
 
-  /* 按钮 */
-  --van-button-primary-background: #3b6892;
-  --van-button-primary-border-color: #3b6892;
-  --van-button-border-radius: 24px;
-  --van-button-default-height: 44px;
+  /* 按钮 - 超圆胶囊形 */
+  --van-button-primary-background: #82bcc8;
+  --van-button-primary-border-color: #82bcc8;
+  --van-button-border-radius: 28px;
+  --van-button-default-height: 48px;
 
   /* 单元格 */
   --van-cell-background: #ffffff;
-  --van-cell-text-color: #323233;
-  --van-cell-label-color: #969799;
-  --van-cell-border-color: #f0ebe0;
+  --van-cell-text-color: #4a4a5a;
+  --van-cell-label-color: #a0a0b0;
+  --van-cell-border-color: #f0e8e0;
 
   /* 标签 */
-  --van-tag-primary-background: #3b6892;
-  --van-tag-primary-border-color: #3b6892;
+  --van-tag-primary-background: #82bcc8;
+  --van-tag-primary-border-color: #82bcc8;
 
   /* 加载 */
-  --van-loading-spinner-color: #3b6892;
+  --van-loading-spinner-color: #82bcc8;
 
   /* Toast */
-  --van-toast-background: rgba(50, 50, 51, 0.9);
+  --van-toast-background: rgba(80, 80, 90, 0.9);
 }
 
-/* ---- 页面容器 ---- */
+/* ---- 页面容器 - 温暖黏土底色 ---- */
 .page-container {
   min-height: 100vh;
-  background-color: #f5f1e8;
+  background-color: #f3efe8;
   padding-bottom: 70px;
 }
 
@@ -85,55 +87,81 @@
 /* ---- 按钮 ---- */
 .common-button {
   width: 100%;
-  height: 44px;
-  line-height: 44px;
+  height: 48px;
+  line-height: 48px;
   font-size: 16px;
-  border-radius: 24px;
+  border-radius: 28px;
 }
 
-/* 渐变主按钮 - 敦煌蓝 */
+/* ★ 黏土主按钮：双重外阴影 + 顶部内高光 + 弹性回弹动画 ★ */
 .primary-gradient-btn {
-  background: linear-gradient(135deg, #3b6892 0%, #5a8ab8 100%) !important;
+  background: #82bcc8 !important;
   border: none !important;
   color: #fff !important;
-  font-weight: 500;
-  box-shadow: 0 4px 12px rgba(59, 104, 146, 0.25);
-  transition: all 0.2s ease;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  box-shadow:
+    0 8px 24px rgba(130, 188, 200, 0.3),
+    0 2px 8px rgba(130, 188, 200, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .primary-gradient-btn:active {
-  transform: scale(0.98);
-  box-shadow: 0 2px 8px rgba(59, 104, 146, 0.2);
+  transform: scale(0.95);
+  box-shadow:
+    0 2px 8px rgba(130, 188, 200, 0.2),
+    inset 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .secondary-button {
   background-color: #fff !important;
-  color: #3b6892 !important;
-  border: 1px solid #3b6892 !important;
+  color: #82bcc8 !important;
+  border: 2px solid #c8e0e8 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
 }
 
-/* ---- 卡片 ---- */
+/* ---- ★ 卡片（Claymorphism 灵魂） ★ ---- */
 .card {
   background-color: #fff;
-  border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 12px;
-  box-shadow: 0 2px 12px rgba(59, 104, 146, 0.06);
-  transition: box-shadow 0.2s ease;
+  border-radius: 24px;
+  padding: 18px;
+  margin-bottom: 14px;
+  /* 黏土双重外阴影：深色模拟遮挡 + 浅色模拟环境光反射 */
+  box-shadow:
+    0 6px 24px rgba(0, 0, 0, 0.04),
+    0 2px 8px rgba(0, 0, 0, 0.03);
+  position: relative;
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
 }
 
 .card:active {
-  box-shadow: 0 2px 8px rgba(59, 104, 146, 0.04);
+  transform: scale(0.985);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
-/* 卡片标题 - 双色装饰线 */
+/* 卡片顶部高光装饰线 → 模拟黏土倒角反光 */
+.card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 18px;
+  right: 18px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(130, 188, 200, 0.12), transparent);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+/* 卡片标题 - 左侧圆点装饰 */
 .section-title {
   font-size: 17px;
   font-weight: 700;
-  color: #2c2c2c;
+  color: #4a4a5a;
   margin-bottom: 14px;
   position: relative;
-  padding-left: 10px;
+  padding-left: 14px;
 }
 
 .section-title::before {
@@ -142,10 +170,10 @@
   left: 0;
   top: 50%;
   transform: translateY(-50%);
-  width: 3px;
-  height: 16px;
-  background: linear-gradient(180deg, #3b6892, #8c8732);
-  border-radius: 2px;
+  width: 5px;
+  height: 5px;
+  background: #82bcc8;
+  border-radius: 50%;
 }
 
 /* ---- 动效 ---- */
@@ -159,20 +187,20 @@
   50% { opacity: 0; }
 }
 
-/* 淡入动画 */
+/* 黏土弹入动画：轻微缩放+位移 */
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(12px) scale(0.97);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
 .fade-in-up {
-  animation: fadeInUp 0.3s ease-out;
+  animation: fadeInUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* ---- 加载容器 ---- */
@@ -183,18 +211,25 @@
   padding: 40px 0;
 }
 
-/* ---- 输入框统一样式 ---- */
+/* ---- ★ 输入框黏土凹槽样式（Claymorphism 灵魂） ★ ---- */
 .field-block {
-  background-color: #f7f5ee;
-  border-radius: 10px;
+  background-color: #ede8e0;
+  border-radius: 16px;
   margin-bottom: 12px;
+  /* 内凹阴影 → 被"挖"出来的凹槽感 */
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.05),
+    inset 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
-/* ---- 标签统一样式 ---- */
-.tag-dunhuang {
-  background: #d8d89f;
-  color: #5c5c32;
-  border-radius: 12px;
-  padding: 2px 10px;
+/* ---- 黏土标签 ---- */
+.tag-clay {
+  background: #eaf5f7;
+  color: #5d9aa8;
+  border-radius: 14px;
+  padding: 4px 12px;
   font-size: 12px;
+  font-weight: 500;
+  box-shadow: 0 2px 6px rgba(130, 188, 200, 0.08);
+  display: inline-block;
 }

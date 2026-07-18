@@ -109,8 +109,9 @@ const goLogin = () => {
 </template>
 
 <style scoped>
+/* Claymorphism 黏土风格 */
 .page-container {
-  background: #f5f1e8;
+  background: #f3efe8;
   min-height: 100vh;
 }
 
@@ -120,25 +121,40 @@ const goLogin = () => {
 }
 
 .auth-logo {
-  font-size: 64px;
+  font-size: 72px;
   margin-bottom: 12px;
   margin-top: 20px;
+  filter: drop-shadow(0 6px 12px rgba(130, 188, 200, 0.2));
 }
 
 .auth-title {
   font-size: 22px;
-  color: #2c2c2c;
+  color: #4a4a5a;
   margin-bottom: 8px;
   font-weight: 700;
 }
 
+/* 黏土表单卡片 */
 .auth-form {
   text-align: left;
   background: #fff;
-  border-radius: 16px;
+  border-radius: 24px;
   overflow: hidden;
   padding: 8px 0;
-  box-shadow: 0 4px 20px rgba(59, 104, 146, 0.06);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.05),
+    0 2px 8px rgba(0, 0, 0, 0.03);
+  position: relative;
+}
+
+.auth-form::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 18px;
+  right: 18px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(130, 188, 200, 0.15), transparent);
 }
 
 .auth-form :deep(.van-field) {
@@ -146,7 +162,7 @@ const goLogin = () => {
 }
 
 .auth-form :deep(.van-field__label) {
-  color: #666;
+  color: #6e6e7e;
   font-size: 14px;
   width: 80px;
 }
@@ -154,26 +170,36 @@ const goLogin = () => {
 .auth-form :deep(.van-cell::after) {
   left: 16px;
   right: 16px;
-  border-color: #f5f2eb;
+  border-color: #f0e8e0;
+}
+
+.auth-form :deep(.van-field__control) {
+  background: #ede8e0;
+  border-radius: 12px;
+  padding: 8px 12px;
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.04),
+    inset 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .register-btn {
   margin-top: 28px;
-  height: 46px;
+  margin-bottom: 8px;
+  height: 48px;
   font-size: 16px;
-  font-weight: 500;
-  border-radius: 23px !important;
+  font-weight: 600;
+  border-radius: 28px !important;
 }
 
 .auth-footer {
   margin-top: 24px;
   font-size: 14px;
-  color: #999;
+  color: #a0a0b0;
 }
 
 .link {
-  color: #3b6892;
+  color: #82bcc8;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
 }
 </style>

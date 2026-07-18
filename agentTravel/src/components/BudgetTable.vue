@@ -102,22 +102,24 @@ const getLabel = (key) => {
   margin-top: 8px;
 }
 
-/* 总计行：灰底、圆角、左右分布（总计 + 金额） */
+/* 总计行：黏土风格 */
 .budget-total {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  background: #f7f8fa;
-  border-radius: 8px;
+  background: #eaf5f7;
+  border-radius: 14px;
   margin-top: 8px;
   font-size: 16px;
   font-weight: 600;
+  color: #4a4a5a;
 }
 
-/* 总计金额：红色、稍大字号，醒目 */
+/* 总计金额：主色突出 */
 .total-amount {
-  color: #ee0a24;
+  color: #82bcc8;
   font-size: 18px;
+  font-weight: 700;
 }
 </style>

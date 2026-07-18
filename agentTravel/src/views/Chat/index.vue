@@ -4,13 +4,11 @@ import { useRouter, useRoute } from 'vue-router'
 import { fetchStream, getErrorMessage } from '@/utils/request'
 import { showToast, showDialog } from 'vant'
 import ChatBubble from '@/components/ChatBubble.vue'
-import { useTravelStore } from '@/stores/travel'
 import { useChatStore } from '@/stores/chat'
 
 const router = useRouter()
 const route = useRoute()
 
-const travelStore = useTravelStore()
 const chatStore = useChatStore()
 
 // AI 是否正在生成回复
@@ -270,6 +268,14 @@ onMounted(() => {
       </van-nav-bar>
     </div>
 
+    <!-- Claymorphism 黏土背景装饰 blob（页面层级，不被 overflow 裁剪） -->
+    <div class="chat-bg-decor">
+      <div class="bg-blob blob-1"></div>
+      <div class="bg-blob blob-2"></div>
+      <div class="bg-blob blob-3"></div>
+      <div class="bg-blob blob-4"></div>
+    </div>
+
     <!-- ====== 聊天区域 ====== -->
     <div ref="chatContainerRef" class="chat-container">
       <!-- 空状态 -->
@@ -390,7 +396,81 @@ onMounted(() => {
   flex-direction: column;
   height: 100vh;
   padding-bottom: 0 !important;
-  background: #f5f1e8;
+  background: #f3efe8;
+  position: relative;
+}
+
+/* ---- Claymorphism 背景装饰 blob（页面层级） ---- */
+.chat-bg-decor {
+  position: absolute;
+  top: 46px;        /* header 高度 */
+  bottom: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.bg-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(30px);
+}
+
+.blob-1 {
+  width: 200px;
+  height: 200px;
+  background: #bfd8df;
+  opacity: 0.5;
+  top: 8%;
+  right: 12%;
+  animation: blob-float 13s ease-in-out infinite;
+}
+
+.blob-2 {
+  width: 150px;
+  height: 150px;
+  background: #e0dbb0;
+  opacity: 0.45;
+  bottom: 20%;
+  left: 10%;
+  animation: blob-float 16s ease-in-out 3s infinite;
+}
+
+.blob-3 {
+  width: 120px;
+  height: 120px;
+  background: #eed9c8;
+  opacity: 0.5;
+  top: 40%;
+  right: 25%;
+  animation: blob-float 11s ease-in-out 5s infinite;
+}
+
+.blob-4 {
+  width: 180px;
+  height: 180px;
+  background: #cddce8;
+  opacity: 0.4;
+  bottom: 30%;
+  right: 5%;
+  animation: blob-float 15s ease-in-out 7s infinite;
+}
+
+@keyframes blob-float {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(12px, -18px) scale(1.08);
+  }
+  50% {
+    transform: translate(-8px, 12px) scale(0.94);
+  }
+  75% {
+    transform: translate(-14px, -6px) scale(1.05);
+  }
 }
 
 .chat-container {
@@ -399,6 +479,8 @@ onMounted(() => {
   padding: 16px;
   padding-bottom: 80px;
   padding-top: 60px;
+  position: relative;
+  z-index: 1;
 }
 
 /* ---- 空状态 ---- */
@@ -425,32 +507,9 @@ onMounted(() => {
 .quick-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px; /* 稍微加大标签间隙，减少拥挤 */
+  gap: 12px;
   justify-content: center;
-  /* 左右内边距大幅加宽，给两侧圆角预留充足空间 */
   padding: 0 60px;
-}
-
-.quick-tag {
-  background: #fff;
-  color: #3b6892;
-  border: 1px solid #c5d6e6;
-  border-radius: 8px;
-  /* 加大左右内边距，缩短标签整体宽度，远离容器边缘 */
-  padding: 6px 16px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  /* 关键：给每个标签左右增加外边距，缩放时不会贴容器边缘 */
-  margin: 0 2px;
-  /* 防止缩放时边缘裁切 */
-  box-sizing: border-box;
-}
-
-.quick-tag:active {
-  background: #e8f0f8;
-  /* 缩小幅度降低，避免过度挤压圆角 */
-  transform: scale(0.98);
 }
 
 /* ---- 消息列表 ---- */
@@ -464,13 +523,15 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 14px;
-  color: #999;
+  padding: 12px 16px;
+  color: #82bcc8;
   font-size: 13px;
   background: #fff;
-  border-radius: 0 12px 12px 12px;
+  border-radius: 0 18px 18px 18px;
   align-self: flex-start;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  box-shadow:
+    0 4px 14px rgba(130, 188, 200, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.03);
 }
 
 /* ---- 底部输入区 ---- */
@@ -480,8 +541,11 @@ onMounted(() => {
   left: 0;
   right: 0;
   background: #fff;
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.03);
+  padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
+  box-shadow:
+    0 -6px 20px rgba(0, 0, 0, 0.04),
+    0 -2px 6px rgba(0, 0, 0, 0.02);
+  border-radius: 20px 20px 0 0;
   max-width: 750px;
   margin: 0 auto;
   z-index: 100;
@@ -505,19 +569,26 @@ onMounted(() => {
 }
 
 .chat-input-area :deep(.van-field) {
-  background: #f7f5ee;
+  background: #ede8e0;
   border-radius: 22px;
-  padding: 8px 8px 8px 16px;
+  padding: 10px 10px 10px 18px;
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.04),
+    inset 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .chat-input-area :deep(.van-button--primary) {
-  background: linear-gradient(135deg, #3b6892 0%, #5a8ab8 100%) !important;
+  background: #82bcc8 !important;
   border: none !important;
-  border-radius: 18px !important;
-  height: 32px;
-  line-height: 32px;
-  padding: 0 16px;
+  border-radius: 20px !important;
+  height: 34px;
+  line-height: 34px;
+  padding: 0 18px;
   font-size: 14px;
+  font-weight: 600;
+  box-shadow:
+    0 3px 10px rgba(130, 188, 200, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 /* ---- 历史会话面板 ---- */
@@ -525,7 +596,7 @@ onMounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #f5f1e8;
+  background: #f3efe8;
 }
 
 .history-header {
@@ -533,8 +604,9 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  background: linear-gradient(135deg, #3b6892 0%, #5a8ab8 100%);
+  background: #82bcc8;
   color: #fff;
+  border-radius: 0 0 16px 16px;
 }
 
 .history-title {
@@ -546,6 +618,7 @@ onMounted(() => {
   background: rgba(255, 255, 255, 0.2) !important;
   border-color: rgba(255, 255, 255, 0.4) !important;
   color: #fff !important;
+  border-radius: 16px !important;
 }
 
 .history-list {
@@ -556,27 +629,30 @@ onMounted(() => {
 
 .history-session-item {
   background: #fff;
-  border-radius: 12px;
+  border-radius: 18px;
   padding: 14px;
   margin-bottom: 10px;
   position: relative;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(59, 104, 146, 0.04);
-  transition: all 0.2s ease;
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.04),
+    0 2px 4px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .history-session-item:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
 }
 
 .history-session-item.active {
-  border: 1px solid #3b6892;
-  background: #f0f5fa;
+  border: 2px solid #82bcc8;
+  background: #eaf5f7;
 }
 
 .session-title {
   font-size: 14px;
-  color: #3c3c3c;
+  color: #4a4a5a;
   font-weight: 500;
   margin-bottom: 6px;
   padding-right: 24px;
@@ -586,7 +662,7 @@ onMounted(() => {
 }
 
 .history-session-item.active .session-title {
-  color: #3b6892;
+  color: #5d9aa8;
 }
 
 .session-meta {

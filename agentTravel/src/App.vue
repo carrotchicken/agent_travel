@@ -79,13 +79,27 @@ onMounted(async () => {
 </template>
 
 <style>
+/* Claymorphism 黏土 Tabbar：悬浮感 + 顶部内高光 */
 .app-tabbar {
   padding-bottom: env(safe-area-inset-bottom);
-  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.04);
+  border-radius: 20px 20px 0 0;
+  box-shadow:
+    0 -8px 24px rgba(0, 0, 0, 0.05),
+    0 -2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.app-tabbar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20px;
+  right: 20px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(130, 188, 200, 0.2), transparent);
 }
 
 .app-tabbar .van-tabbar-item--active {
-  transform: scale(1.05);
-  transition: transform 0.2s ease;
+  transform: scale(1.08);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 </style>

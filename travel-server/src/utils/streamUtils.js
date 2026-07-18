@@ -14,12 +14,7 @@
  * WebSocket是双向收发，功能太重，代码写起来麻烦；SSE轻量省事刚好够用
  *
  * @param {Object} res - Express框架自带的响应对象，用来向前端返回数据
- * @returns {Object} 三个可用函数：send推送内容、end正常结束、error报错关闭
- */
-/**
- * 生成一套SSE推送工具，用来持续给前端一段一段发文字
- * @param {import('express').Response} res - Express 响应对象
- * @returns {{ send: (data: any) => void, end: () => void, error: (message: any) => void }} 三个操作函数
+ * @returns {{ send: (data: any) => void, end: () => void }} 两个操作函数
  */
 export const createStreamResponse = (res) => {
     
@@ -87,23 +82,5 @@ export const createStreamResponse = (res) => {
                 console.error('关闭流式连接失败:', error)
             }
         },
-
-        /**
-         * error：AI调用出错时，终止推送并关闭连接
-         * 和end正常结束的区别：
-         * end是AI正常写完内容收尾；error是中途出故障，推送中断
-         *
-         * @param {*} message 要传给前端的错误提示文字
-         */
-        error: (message) => {
-            try {
-                // 把错误信息推送给前端
-                res.write(`data:${JSON.stringify(message)}\n\n`)
-                // 直接关闭连接
-                res.end()
-            } catch (error) {
-                console.error('流式报错处理失败:', error)
-            }
-        }
     }
 }

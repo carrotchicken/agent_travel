@@ -82,7 +82,7 @@ defineProps({
 .spot-name {
   font-size: 16px;
   font-weight: 600;
-  color: #323233;
+  color: #4a4a5a;
   margin-bottom: 8px;
 }
 

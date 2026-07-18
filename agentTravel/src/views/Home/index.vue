@@ -140,10 +140,10 @@ const selectedCity = (city) => {
             <!-- ====== 欢迎横幅 ====== -->
             <div class="welcome-banner">
                 <div class="banner-text">
-                    <h1 class="banner-title">AI 智能规划</h1>
+                    <h1 class="banner-title">🗺️ AI 智能规划</h1>
                     <p class="banner-sub">你的专属旅行管家</p>
                 </div>
-                <div class="banner-icon">✈️</div>
+                
             </div>
 
             <!-- ====== 搜索表单 ====== -->
@@ -196,13 +196,13 @@ const selectedCity = (city) => {
                 <van-grid :column-num="2" :gutter="12" :border="false">
                     <van-grid-item @click="goPage('/chat')">
                         <div class="quick-item">
-                            <div class="quick-icon chat-icon">💬</div>
+                            <div class="quick-icon chat-icon">💭</div>
                             <span class="quick-text">AI 对话</span>
                         </div>
                     </van-grid-item>
                     <van-grid-item @click="goPage('/profile')">
                         <div class="quick-item">
-                            <div class="quick-icon profile-icon">👤</div>
+                            <div class="quick-icon profile-icon">🧳</div>
                             <span class="quick-text">我的</span>
                         </div>
                     </van-grid-item>
@@ -246,13 +246,16 @@ const selectedCity = (city) => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 16px 16px;
-    background: linear-gradient(135deg, #3b6892 0%, #5a8ab8 100%);
-    margin: 10px 10px;
-    border-radius: 7px 7px;
+    padding: 24px 20px 20px;
+    background: #82bcc8;
+    margin: 12px 12px 0;
+    border-radius: 24px;
     color: #fff;
     position: relative;
     overflow: hidden;
+    box-shadow:
+      0 8px 24px rgba(130, 188, 200, 0.3),
+      0 2px 8px rgba(130, 188, 200, 0.12);
 }
 
 .welcome-banner::after {
@@ -267,8 +270,8 @@ const selectedCity = (city) => {
 }
 
 .banner-title {
-    font-size: 22px;
-    font-weight: 700;
+    font-size: 24px;
+    font-weight: 800;
     margin: 0 0 4px;
     letter-spacing: 1px;
 }
@@ -279,20 +282,18 @@ const selectedCity = (city) => {
     margin: 0;
 }
 
-.banner-icon {
-    font-size: 40px;
-    opacity: 0.9;
-}
-
 /* ---- 表单 ---- */
 .search-card {
     margin-bottom: 16px;
 }
 
 .form-field {
-    background-color: #f7f5ee !important;
-    border-radius: 10px;
-    margin-bottom: 12px;
+    background-color: #ede8e0 !important;
+    border-radius: 16px;
+    margin-bottom: 14px;
+    box-shadow:
+      inset 0 2px 6px rgba(0, 0, 0, 0.05),
+      inset 0 1px 2px rgba(0, 0, 0, 0.03) !important;
 }
 
 .form-field :deep(.van-field__body) {
@@ -301,10 +302,10 @@ const selectedCity = (city) => {
 
 .submit-btn {
     width: 100%;
-    margin-top: 8px;
-    height: 46px;
+    margin-top: 10px;
+    height: 50px;
     font-size: 16px;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 /* ---- 快捷入口 ---- */
@@ -321,24 +322,28 @@ const selectedCity = (city) => {
 }
 
 .quick-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 14px;
+    width: 52px;
+    height: 52px;
+    border-radius: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 22px;
-    background: linear-gradient(135deg, #e8f0f8 0%, #d4e4f2 100%);
-    transition: transform 0.2s ease;
+    font-size: 24px;
+    background: #eaf5f7;
+    box-shadow:
+      0 4px 12px rgba(130, 188, 200, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .quick-item:active .quick-icon {
-    transform: scale(0.95);
+    transform: scale(0.92);
 }
 
 .quick-text {
     font-size: 13px;
-    color: #3c3c3c;
+    color: #4a4a5a;
+    font-weight: 500;
 }
 
 /* ---- 热门城市 ---- */
@@ -350,23 +355,31 @@ const selectedCity = (city) => {
 }
 
 .city-tag {
-    padding: 8px 16px;
-    border-radius: 20px;
+    padding: 10px 18px;
+    border-radius: 22px;
     font-size: 13px;
-    color: #5c5c5c;
-    background: #ebe7d8;
-    transition: all 0.2s ease;
+    color: #6e6e7e;
+    background: #ede8e0;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.6),
+      0 2px 6px rgba(0, 0, 0, 0.04);
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
     cursor: pointer;
-    border: 1px solid transparent;
+    border: none;
+    font-weight: 500;
 }
 
 .city-tag:active {
-    transform: scale(0.96);
+    transform: scale(0.93);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 
 .city-tag.active {
-    background: linear-gradient(135deg, #3b6892 0%, #5a8ab8 100%);
+    background: #82bcc8;
     color: #fff;
-    box-shadow: 0 4px 10px rgba(59, 104, 146, 0.25);
+    font-weight: 600;
+    box-shadow:
+      0 6px 16px rgba(130, 188, 200, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 </style>

@@ -75,17 +75,22 @@ const renderedContent = computed(() => {
 }
 
 .user-message .bubble-content {
-  background: linear-gradient(135deg, #3b6892 0%, #5a8ab8 100%);
+  background: #82bcc8;
   color: #fff;
   border-bottom-right-radius: 4px;
-  box-shadow: 0 2px 8px rgba(59, 104, 146, 0.2);
+  box-shadow:
+    0 4px 14px rgba(130, 188, 200, 0.3),
+    0 2px 4px rgba(130, 188, 200, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .ai-message .bubble-content {
   background: #fff;
-  color: #3c3c3c;
+  color: #4a4a5a;
   border-bottom-left-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.04),
+    0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .message-time {
@@ -116,21 +121,21 @@ const renderedContent = computed(() => {
 
 .markdown-body :deep(strong) {
   font-weight: 600;
-  color: #2c2c2c;
+  color: #4a4a5a;
 }
 
 .markdown-body :deep(code) {
-  background: #f0f5fa;
+  background: #eaf5f7;
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 13px;
-  color: #3b6892;
+  color: #5d9aa8;
 }
 
 .markdown-body :deep(pre) {
-  background: #f7f5ee;
+  background: #ede8e0;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: 10px;
   overflow-x: auto;
   margin: 8px 0;
 }
@@ -146,13 +151,13 @@ const renderedContent = computed(() => {
   font-size: 15px;
   font-weight: 600;
   margin: 8px 0 4px;
-  color: #2c2c2c;
+  color: #4a4a5a;
 }
 
 .markdown-body :deep(blockquote) {
-  border-left: 3px solid #c5d6e6;
+  border-left: 3px solid #c8e0e8;
   margin: 8px 0;
   padding-left: 12px;
-  color: #666;
+  color: #6e6e7e;
 }
 </style>

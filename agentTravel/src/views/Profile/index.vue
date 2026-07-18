@@ -134,6 +134,18 @@ const goHome = () => router.push('/')
 
     <!-- 用户信息卡片 -->
     <div class="user-info">
+      <!-- 黏土装饰层 -->
+      <div class="profile-decor">
+        <div class="pd-blob pd-blob--1"></div>
+        <div class="pd-blob pd-blob--2"></div>
+        <div class="pd-blob pd-blob--3"></div>
+        <div class="pd-ring"></div>
+        <div class="pd-dot pd-dot--1"></div>
+        <div class="pd-dot pd-dot--2"></div>
+        <div class="pd-dot pd-dot--3"></div>
+        <div class="pd-dot pd-dot--4"></div>
+        <span class="pd-emoji">🧳</span>
+      </div>
       <van-image :src="authStore.displayAvatar" round class="avatar" />
       <div class="user-details">
         <h2 class="user-name">{{ authStore.displayName }}</h2>
@@ -249,43 +261,147 @@ const goHome = () => router.push('/')
 <style scoped>
 .profile-container {
   padding-bottom: 80px;
-  background: #f7f3eb;
+  background: #f3efe8;
   min-height: 100vh;
 }
 
-/* 顶部用户信息卡片 */
+/* 黏土用户信息卡片 */
 .user-info {
   display: flex;
   align-items: center;
   padding: 32px 20px 42px;
   margin: 12px 12px 0;
-  background: linear-gradient(135deg, #325d86 0%, #5484b3 100%);
+  background: #82bcc8;
   color: #fff;
-  border-radius: 20px;
+  border-radius: 24px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 6px 16px rgba(50, 93, 134, 0.18);
+  box-shadow:
+    0 8px 24px rgba(130, 188, 200, 0.3),
+    0 2px 8px rgba(130, 188, 200, 0.12);
 }
-/* 背景装饰圆形光晕 */
-.user-info::after {
-  content: '';
+
+/* ====== 黏土装饰层 ====== */
+.profile-decor {
   position: absolute;
-  right: -40px;
-  bottom: -40px;
-  width: 160px;
-  height: 160px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, transparent 72%);
-  border-radius: 50%;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
 }
-.user-info::before {
-  content: '';
+
+/* 柔和光晕 blob */
+.pd-blob {
   position: absolute;
-  left: -60px;
-  top: -60px;
-  width: 140px;
-  height: 140px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
   border-radius: 50%;
+  filter: blur(24px);
+}
+
+.pd-blob--1 {
+  width: 120px;
+  height: 120px;
+  background: rgba(255, 255, 255, 0.13);
+  top: -30px;
+  right: 20px;
+  animation: pd-float 8s ease-in-out infinite;
+}
+
+.pd-blob--2 {
+  width: 80px;
+  height: 80px;
+  background: rgba(216, 216, 159, 0.2);
+  bottom: 5px;
+  left: 60%;
+  animation: pd-float 10s ease-in-out 3s infinite;
+}
+
+.pd-blob--3 {
+  width: 100px;
+  height: 100px;
+  background: rgba(255, 255, 255, 0.1);
+  top: 50%;
+  right: -20px;
+  animation: pd-float 9s ease-in-out 5s infinite;
+}
+
+/* 头像光环 */
+.pd-ring {
+  position: absolute;
+  width: 106px;
+  height: 106px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  top: 22px;
+  left: 10px;
+  animation: pd-pulse 4s ease-in-out infinite;
+}
+
+/* 装饰小圆点 */
+.pd-dot {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.pd-dot--1 {
+  width: 8px;
+  height: 8px;
+  top: 18px;
+  right: 60px;
+  animation: pd-float 6s ease-in-out 1s infinite;
+}
+
+.pd-dot--2 {
+  width: 5px;
+  height: 5px;
+  top: 55px;
+  right: 40px;
+  animation: pd-float 7s ease-in-out 4s infinite;
+}
+
+.pd-dot--3 {
+  width: 6px;
+  height: 6px;
+  bottom: 20px;
+  right: 100px;
+  animation: pd-float 5s ease-in-out 2s infinite;
+}
+
+.pd-dot--4 {
+  width: 4px;
+  height: 4px;
+  top: 40px;
+  right: 80px;
+  animation: pd-float 8s ease-in-out 6s infinite;
+}
+
+/* 旅行装饰 emoji */
+.pd-emoji {
+  position: absolute;
+  font-size: 28px;
+  opacity: 0.35;
+  bottom: 10px;
+  right: 16px;
+  animation: pd-float 7s ease-in-out 2s infinite;
+}
+
+@keyframes pd-float {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(6px, -10px) scale(1.06);
+  }
+}
+
+@keyframes pd-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.6;
+  }
 }
 
 .avatar {
@@ -293,6 +409,7 @@ const goHome = () => router.push('/')
   height: 86px;
   border: 3px solid rgba(255, 255, 255, 0.5);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  z-index: 2;
 }
 
 .user-details {
@@ -320,23 +437,27 @@ const goHome = () => router.push('/')
 }
 .login-prompt :deep(.van-button) {
   background: #fff !important;
-  color: #325d86 !important;
+  color: #5d9aa8 !important;
   border: none !important;
-  font-weight: 500;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  font-weight: 600;
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 /* 行程Tab卡片 */
 .trip-section {
   background-color: #ffffff;
-  border-radius: 20px;
+  border-radius: 24px;
   margin: 20px 12px 0;
   overflow: hidden;
-  box-shadow: 0 3px 14px rgba(59, 104, 146, 0.06);
+  box-shadow:
+    0 6px 24px rgba(0, 0, 0, 0.04),
+    0 2px 8px rgba(0, 0, 0, 0.03);
 }
 /* tab下划线美化 */
 .trip-section :deep(.van-tabs__line) {
-  background: linear-gradient(90deg, #325d86, #5484b3);
+  background: #82bcc8;
   width: 30px !important;
   border-radius: 99px;
   height: 3px;
@@ -345,7 +466,7 @@ const goHome = () => router.push('/')
   font-size: 14px;
 }
 .trip-section :deep(.van-tab--active) {
-  color: #325d86 !important;
+  color: #82bcc8 !important;
   font-weight: 600;
 }
 
@@ -362,7 +483,7 @@ const goHome = () => router.push('/')
 }
 .clear-btn {
   font-size: 13px;
-  color: #325d86;
+  color: #82bcc8;
   cursor: pointer;
   transition: opacity 0.2s;
 }
@@ -384,7 +505,7 @@ const goHome = () => router.push('/')
   border-bottom: none;
 }
 .trip-item:active {
-  background: #f7f3eb;
+  background: #eaf5f7;
 }
 .trip-left {
   flex: 1;
@@ -393,7 +514,7 @@ const goHome = () => router.push('/')
 .trip-city {
   font-size: 16px;
   font-weight: 600;
-  color: #222;
+  color: #4a4a5a;
   margin-bottom: 5px;
 }
 .trip-meta {
@@ -424,21 +545,24 @@ const goHome = () => router.push('/')
 }
 .empty-btn {
   margin-top: 16px;
-  background: linear-gradient(90deg, #325d86, #5484b3) !important;
+  background: #82bcc8 !important;
   border: none;
+  font-weight: 600;
 }
 
-/* 菜单通用区块 */
+/* 黏土菜单通用区块 */
 .menu-section {
   background-color: #fff;
-  border-radius: 20px;
+  border-radius: 24px;
   margin: 20px 12px 0;
   overflow: hidden;
-  box-shadow: 0 3px 14px rgba(59, 104, 146, 0.06);
+  box-shadow:
+    0 6px 24px rgba(0, 0, 0, 0.04),
+    0 2px 8px rgba(0, 0, 0, 0.03);
 }
 .menu-title {
   font-size: 13px;
-  color: #999;
+  color: #a0a0b0;
   padding: 14px 18px 8px;
   margin: 0;
   font-weight: normal;
@@ -447,7 +571,7 @@ const goHome = () => router.push('/')
   padding: 16px 18px;
 }
 .menu-section :deep(.van-cell__left-icon) {
-  color: #325d86;
+  color: #82bcc8;
   margin-right: 12px;
   font-size: 19px;
 }
